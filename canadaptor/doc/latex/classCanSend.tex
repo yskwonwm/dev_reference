@@ -1,0 +1,52 @@
+\hypertarget{classCanSend}{}\doxysection{Can\+Send Class Reference}
+\label{classCanSend}\index{CanSend@{CanSend}}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classCanSend_ae6daec1fd14a9605fde5b78d9c054de7}\label{classCanSend_ae6daec1fd14a9605fde5b78d9c054de7}} 
+void {\bfseries socketclose} ()
+\item 
+int \mbox{\hyperlink{classCanSend_a803ba13f1b323216381caa456658d6e6}{send}} (std\+::vector$<$ unsigned char $>$ body, unsigned int msgid, char $\ast$device)
+\begin{DoxyCompactList}\small\item\em Send data to the C\+AN network. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classCanSend_a9168a30484b9dc14c2e8f58734315633}\label{classCanSend_a9168a30484b9dc14c2e8f58734315633}} 
+int {\bfseries socketopen} (std\+::vector$<$ std\+::string $>$ device)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classCanSend_a803ba13f1b323216381caa456658d6e6}\label{classCanSend_a803ba13f1b323216381caa456658d6e6}} 
+\index{CanSend@{CanSend}!send@{send}}
+\index{send@{send}!CanSend@{CanSend}}
+\doxysubsubsection{\texorpdfstring{send()}{send()}}
+{\footnotesize\ttfamily int Can\+Send\+::send (\begin{DoxyParamCaption}\item[{std\+::vector$<$ unsigned char $>$}]{data,  }\item[{unsigned int}]{msgid,  }\item[{char $\ast$}]{device }\end{DoxyParamCaption})}
+
+
+
+Send data to the C\+AN network. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em body} & transmission body \\
+\hline
+{\em msgid} & can id \\
+\hline
+{\em device} & channel \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+int 
+\end{DoxyReturn}
+\begin{DoxyWarning}{Warning}
+
+\end{DoxyWarning}
+
+\begin{DoxyExceptions}{Exceptions}
+{\em } & \\
+\hline
+\end{DoxyExceptions}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+can\+\_\+send.\+hpp\item 
+can\+\_\+send.\+cpp\end{DoxyCompactItemize}

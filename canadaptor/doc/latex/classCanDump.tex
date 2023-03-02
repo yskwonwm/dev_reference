@@ -1,0 +1,77 @@
+\hypertarget{classCanDump}{}\doxysection{Can\+Dump Class Reference}
+\label{classCanDump}\index{CanDump@{CanDump}}
+
+
+Can network data listening class.  
+
+
+
+
+{\ttfamily \#include $<$can\+\_\+dump.\+hpp$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+int \mbox{\hyperlink{classCanDump_a0aa9f7546d28cab81e55b22a47164b0b}{open}} (int argc, std\+::vector$<$ std\+::string $>$ argval, \mbox{\hyperlink{classCanAdaptor}{Can\+Adaptor}} $\ast$p\+Class\+Type, void(Can\+Adaptor\+::$\ast$func)(unsigned char $\ast$data, int canid))
+\begin{DoxyCompactList}\small\item\em Channel open for receiving C\+AN data. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{classCanDump_af9180c1dd57c9878b1c87910964d16ae}\label{classCanDump_af9180c1dd57c9878b1c87910964d16ae}} 
+int {\bfseries idx2dindex} (int ifidx, int socket)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Can network data listening class. 
+
+\begin{DoxyDate}{Date}
+2023-\/02-\/14 
+\end{DoxyDate}
+\begin{DoxyAuthor}{Author}
+ys.\+kwon(\href{mailto:ys.kwon@wavem.net}{\texttt{ ys.\+kwon@wavem.\+net}}) 
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Version}
+0.\+0.\+1 
+\end{DoxyVersion}
+\begin{DoxyWarning}{Warning}
+
+\end{DoxyWarning}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classCanDump_a0aa9f7546d28cab81e55b22a47164b0b}\label{classCanDump_a0aa9f7546d28cab81e55b22a47164b0b}} 
+\index{CanDump@{CanDump}!open@{open}}
+\index{open@{open}!CanDump@{CanDump}}
+\doxysubsubsection{\texorpdfstring{open()}{open()}}
+{\footnotesize\ttfamily int Can\+Dump\+::open (\begin{DoxyParamCaption}\item[{int}]{argc,  }\item[{std\+::vector$<$ std\+::string $>$}]{argval,  }\item[{\mbox{\hyperlink{classCanAdaptor}{Can\+Adaptor}} $\ast$}]{p\+Class\+Type,  }\item[{void(Can\+Adaptor\+::$\ast$)(unsigned char $\ast$data, int canid)}]{func }\end{DoxyParamCaption})}
+
+
+
+Channel open for receiving C\+AN data. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em argc} & number of channels \\
+\hline
+{\em argv} & Channel to open and filtering message information \\
+\hline
+{\em p\+Class\+Type} & Class for calling callback functions \\
+\hline
+{\em func} & Callback function when receiving C\+AN data \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Result of processing, 0 if successful 
+\end{DoxyReturn}
+\begin{DoxyWarning}{Warning}
+
+\end{DoxyWarning}
+
+\begin{DoxyExceptions}{Exceptions}
+{\em } & \\
+\hline
+\end{DoxyExceptions}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+can\+\_\+dump.\+hpp\item 
+can\+\_\+dump.\+cpp\end{DoxyCompactItemize}
