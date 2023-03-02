@@ -1,6 +1,6 @@
 # dev-reference
 
-## CAN adaptor
+## 1. CAN adaptor
 CAN communication transmit/receive connection
 
 ## 개발환경
@@ -73,3 +73,13 @@ $./cansend vcan0 010#0500100010000101
 * [linux can](https://elinux.org/CAN_Bus)
 * [SocketCAN](https://github.com/linux-can)
 * [BUSMASTER](https://rbei-etas.github.io/busmaster)
+
+
+
+## 2. lon/lat distance
+longitude and Latitude coordinate distance calculation
+
+
+## Complie
+ ```
+$ g++ -o main.cpp -lm
