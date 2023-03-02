@@ -82,4 +82,4 @@ longitude and Latitude coordinate distance calculation
 
 ## Complie
  ```
-$ g++ -o main.cpp -lm
+$ g++ -o test main.cpp -lm
