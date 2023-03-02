@@ -1,20 +1,22 @@
 # dev-reference
 
-## 1. CAN adaptor
+# 1. CAN adaptor
 CAN communication transmit/receive connection
 
-## 개발환경
+### 개발환경
 * ubuntu 20.04
 * gcc version 9.4.0   
 * Visual Studio Code 1.75.1
 * Can-utils
 
-## Architecture  
+### Architecture  
 ![image](https://user-images.githubusercontent.com/87844157/220793454-9d475db8-2912-4f9f-b98d-b82f2806458d.png)
 
-## Source discription
+### Source discription
 
 CAN adpator 관련 소스 및 테스트용  can utils 파일 
+
+canadaptor/
 * can adaptor
     * can_adaptor.cpp
     * can_adaptor.hpp
@@ -33,7 +35,7 @@ CAN adpator 관련 소스 및 테스트용  can utils 파일
 * include
     * w1candbc.h     
 
-## Complie
+### Complie
  ```
 # can adaptor 
 $ g++ -o canadaptor main.cpp can_adaptor.cpp can_dump.cpp lib.c -lpthread    
@@ -47,7 +49,7 @@ $ g++ -o candump candump.c lib.c
 
 ```         
 
-## Test 
+### Test 
  ```
 # create vcan device 
 $ sudo ip link add name vcan0 type vcan    
@@ -69,17 +71,36 @@ $./cansend vcan0 010#0500100010000101
 
 ``` 
 
-## Reference 
+### Reference 
 * [linux can](https://elinux.org/CAN_Bus)
 * [SocketCAN](https://github.com/linux-can)
 * [BUSMASTER](https://rbei-etas.github.io/busmaster)
 
 
+-------
 
-## 2. lon/lat distance
+# 2. lon/lat distance
 longitude and Latitude coordinate distance calculation
 
+### Source discription
 
-## Complie
- ```
+경위도 좌표계 거리계산 소스 파일
+
+distance/
+* calc_distance.hpp
+* geo_trans.hpp
+* main.cpp
+    
+### Complie
+```
 $ g++ -o test main.cpp -lm
+
+```
+### Reference 
+* [Vincenty's formula](https://www.movable-type.co.uk/scripts/latlong-vincenty.html)
+* [Haversine formula](https://en.wikipedia.org/wiki/Haversine_formula)
+* [Spheical Law of Cosines](https://en.wikipedia.org/wiki/Spherical_law_of_cosines)
+* [Equirectangular approximation](https://en.wikipedia.org/wiki/Equirectangular_projection)
+* [Calculate distance](https://www.movable-type.co.uk/scripts/latlong.html)
+* [좌표계와 투영법](https://velog.io/@717lumos/Localization-%EC%A2%8C%ED%91%9C%EA%B3%84%EC%99%80-%ED%88%AC%EC%98%81%EB%B2%95)
+* [좌표계 관련 설명](https://hmjkor.tistory.com/483)
