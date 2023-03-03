@@ -12,7 +12,7 @@ void getduration(clock_t start){
     printf("run time : %f ms\n", duration);
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     // Testing with one value
     //struct Result res = trans(40.99698, 46.0, 9.20127, 10.0);
     clock_t start, finish;
@@ -37,7 +37,18 @@ int main() {
     resutlt_distance  result; 
     CalcDiatance calc;
 
-   printf("\n*** Distance calculation result by  Vincenty's formula /  Haversine formula / Law of Cosines / Korea TM ***\n\n");  
+    if ( argc == 5 ){ 
+      P1_latitude = atof(argv[1]);
+      P1_longitude = atof(argv[2]);
+      P2_latitude = atof(argv[3]);
+      P2_longitude = atof(argv[4]);
+    }else if (argc != 1 ){       	    
+        fprintf(stderr, "\nUsage: %s latitude1 longitude1 latitude2 longitude2\n", argv[0]);
+        exit(-1);
+    }    
+
+    printf("\n*** Distance calculation result by  Vincenty's formula /  Haversine formula / Law of Cosines / Korea TM ***\n");  
+    printf("latitude1 : %f, longitude1 : %f , latitude2 : %f, longitude2 :  %f\n\n",P1_latitude,P1_longitude,P2_latitude,P2_longitude);  
 
     start = clock();
     for ( int i = 0; i < 1000 ; i++){
