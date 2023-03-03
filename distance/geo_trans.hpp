@@ -18,7 +18,7 @@ class GeoTrans {
   public  : 
 	
 	static int person_count_;  
-    enum GEOTRANS { GEO ,KATEC ,TM ,GRS80 };
+    enum GEOTRANS { GEO ,KATEC ,TM, GRS80 };
 	
 	GeoTrans(){
 	//static {		
@@ -40,13 +40,19 @@ class GeoTrans {
 		m_arMinor[KATEC] = 6356078.9633422494;
 		
 		m_arScaleFactor[TM] = 1.0;
-		//this.m_arLonCenter[TM] = 2.21656815003280; // 127
-		m_arLonCenter[TM] = 2.21661859489671; // 127.+10.485 minute
+		//m_arLonCenter[TM] = 2.18171200985643; // kTmWest
+		//m_arLonCenter[TM] = 2.2515251799362; // kTmEast
+		//m_arLonCenter[TM] = 2.21656815003280; // 127
+		m_arLonCenter[TM] = 2.21661859489671; // kTmCenter 127.+10.485 minute
 		m_arLatCenter[TM] = 0.663225115757845;
 		m_arFalseNorthing[TM] = 500000.0;
 		m_arFalseEasting[TM] = 200000.0;
-		m_arMajor[TM] = 6377397.155;
-		m_arMinor[TM] = 6356078.9633422494;
+		m_arMajor[TM] = 6377397.155; // bessel
+		m_arMinor[TM] = 6356078.9633422494; // bessel
+
+		//m_arMajor[TM] = 6378137.0; // kWgs84
+   	    //m_arMinor[TM] = 6356752.3142; // kWgs84
+
 
 		datum_params[0] = -146.43;
 		datum_params[1] = 507.89;
@@ -92,16 +98,16 @@ class GeoTrans {
 
     double getDistancebyTm(double lat1, double lon1, double lat2, double lon2) {
 
-	GeoPoint in_pt,in2_pt;
-        in_pt.y = lat1;
-        in_pt.x = lon1;
-        in2_pt.y = lat2;
-        in2_pt.x = lon2;
+	  GeoPoint in_pt,in2_pt;
+      in_pt.y = lat1;
+      in_pt.x = lon1;
+      in2_pt.y = lat2;
+      in2_pt.x = lon2;
+	 
+	  GeoPoint pt1 = convert(GEO, TM, in_pt);
+	  GeoPoint pt2 = convert(GEO, TM, in2_pt);
 
-	GeoPoint pt1 = convert(GEO, TM, in_pt);
-	GeoPoint pt2 = convert(GEO, TM, in2_pt);
-
-	return sqrt(pow((pt1.x-pt2.x),2)+pow((pt1.y-pt2.y),2));		
+	  return sqrt(pow((pt1.x-pt2.x),2)+pow((pt1.y-pt2.y),2));		
 	}
 
   private :
@@ -163,7 +169,7 @@ class GeoTrans {
 
 	GeoPoint convert(int srctype, int dsttype, GeoPoint in_pt) {
 		GeoPoint tmpPt;
-		GeoPoint out_pt;
+		GeoPoint out_pt;		
 		out_pt.x = 0;
 		out_pt.y = 0;
 		out_pt.z = 0;
@@ -182,7 +188,7 @@ class GeoTrans {
 			//out_pt.x = round(out_pt.x);
 			//out_pt.y = round(out_pt.y);
 		}
-
+//printf("[CONV] %f,%f,  %f,%f\n",tmpPt.x, tmpPt.y, out_pt.x, out_pt.y);
 		return out_pt;
 	}
 	
@@ -191,7 +197,7 @@ class GeoTrans {
 		double x, y;
 		
 		transform(GEO, dsttype, in_pt);
-		
+		//printf("[transform] %f,  %f\n",in_pt.x,in_pt.y);
 
 		double delta_lon = in_pt.x - m_arLonCenter[dsttype];
 		double sin_phi = sin(in_pt.y);
@@ -201,8 +207,7 @@ class GeoTrans {
 			double b = cos_phi * sin(delta_lon);
 
 			if ((abs(abs(b) - 1.0)) < EPSLN) {
-				//Log.d("무한대 에러");
-				//System.out.println("무한대 에러");
+				//printif("무한대 에러");
 			}
 		} else {
 			double b = 0;
@@ -224,10 +229,12 @@ class GeoTrans {
 		double con = 1.0 - m_Es[dsttype] * sin_phi * sin_phi;
 		double n = m_arMajor[dsttype] / sqrt(con);
 		double ml = m_arMajor[dsttype] * mlfn(e0fn(m_Es[dsttype]), e1fn(m_Es[dsttype]), e2fn(m_Es[dsttype]), e3fn(m_Es[dsttype]), in_pt.y);
-
+//printf("[geo2tm] %f,  %f, %f\n",delta_lon,sin_phi,cos_phi);
+//printf("[geo2tm] %f,  %f, %f, %f, %f, %f, %f, %f, %f\n",m_arScaleFactor[dsttype],al,als,c,tq,t,con,n,ml);
 
 		out_pt.x = m_arScaleFactor[dsttype] * n * al * (1.0 + als / 6.0 * (1.0 - t + c + als / 20.0 * (5.0 - 18.0 * t + t * t + 72.0 * c - 58.0 * m_Esp[dsttype]))) + m_arFalseEasting[dsttype];
 		out_pt.y = m_arScaleFactor[dsttype] * (ml - dst_m[dsttype] + n * tq * (als * (0.5 + als / 24.0 * (5.0 - t + 9.0 * c + 4.0 * c * c + als / 30.0 * (61.0 - 58.0 * t + t * t + 600.0 * c - 330.0 * m_Esp[dsttype]))))) + m_arFalseNorthing[dsttype];
+
 	}
 
 
@@ -269,8 +276,7 @@ class GeoTrans {
 			if (abs(delta_Phi) <= EPSLN) break;
 
 			if (i >= max_iter) {
-				//Log.d("무한대 에러");
-				//System.out.println("무한대 에러");
+				//printf("무한대 에러");
 				break;
 			}
 

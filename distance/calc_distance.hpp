@@ -14,7 +14,7 @@ struct resutlt_distance{
   double distance_y;
 };
 
-enum {VINCENTY,HAVERSINE,LAWCOSINES,TM};
+enum {VINCENTY,HAVERSINE,LAWCOSINES,KTM};
 //enum {GEO,KATEC,TM,GRS80};
 
 // struct GeoPoint {
@@ -24,11 +24,14 @@ enum {VINCENTY,HAVERSINE,LAWCOSINES,TM};
 // };
 
 class CalcDiatance {
+  private :
+  	  GeoTrans trans;
   public:
     resutlt_distance 
     getDistance(double lat1, double lon1, double lat2, double lon2,int type ) {
-      resutlt_distance result;
       
+      resutlt_distance result;
+  
       switch (type){
         case VINCENTY:
           result.distance = distanceInMeterByVincenty(lat1, lon1, lat2, lon2);     
@@ -48,8 +51,8 @@ class CalcDiatance {
           result.distance_y = distanceInMeterByCosines(lat1, lon1, lat2, lon1); 
           break;
 
-        case TM:
-		  result.distance = distanceInMeterByTM(lat1, lon1, lat2, lon2);     
+        case KTM:
+          result.distance = distanceInMeterByTM(lat1, lon1, lat2, lon2);     
           result.distance_x = distanceInMeterByTM(lat2, lon1, lat2, lon2); 
           result.distance_y = distanceInMeterByTM(lat1, lon1, lat2, lon1); 
           break;
@@ -147,9 +150,9 @@ class CalcDiatance {
 	}
 
 
-    double distanceInMeterByHaversine(double x1, double y1, double x2, double y2) {
+  double distanceInMeterByHaversine(double x1, double y1, double x2, double y2) {
       
-	  double distance;
+	    double distance;
       double radius = 6371; // 평균 지구 반지름(km)
       double toRadian = M_PI / 180.0;
 
@@ -180,106 +183,10 @@ class CalcDiatance {
 
     double distanceInMeterByTM(double lat1, double lon1, double lat2, double lon2){
 
-      //printf("distanceInMeterByTM x : %f , y : %f , x2 : %f , y2 : %f \n" ,lat1,  lon1,  lat2,  lon2);
-	  GeoTrans trans;
- 	  double result = trans.getDistancebyTm( lat1,  lon1,  lat2,  lon2);
-
+ 	    double result = trans.getDistancebyTm( lat1,  lon1,  lat2,  lon2);
     
       return result;
     }
-
-    // double getDistancebyGeo(GeoPoint pt1, GeoPoint pt2) {
-	// 	double lat1 = deg2rad(pt1.y);
-	// 	double lon1 = deg2rad(pt1.x);
-	// 	double lat2 = deg2rad(pt2.y);
-	// 	double lon2 = deg2rad(pt2.x);
-
-	// 	double longitude = lon2 - lon1;
-	// 	double latitude = lat2 - lat1;
-
-	// 	double a = pow(sin(latitude / 2.0), 2) + cos(lat1) * cos(lat2) * pow(sin(longitude / 2.0), 2);
-	// 	return 6376.5 * 2.0 * atan2(sqrt(a), sqrt(1.0 - a));
-	// }
-
-
-// double getDistancebyTm(GeoPoint pt1, GeoPoint pt2) {
-// 		pt1 = convert(pt1);
-// 		pt2 = convert(pt2);
-
-// 		return getDistancebyGeo(pt1, pt2);
-// }
-
-
-// GeoPoint convert(GeoPoint in_pt) {
-// 		GeoPoint tmpPt;
-// 		GeoPoint out_pt;
-
-// 		tmpPt.x = deg2rad(in_pt.x);
-// 		tmpPt.y = deg2rad(in_pt.y);
-// 		geo2tm(tmpPt, out_pt);
-		
-// 		return out_pt;
-// 	}
-//  void transform(int srctype, int dsttype, GeoPoint point) {
-// 		if (srctype == dsttype)
-// 			return;
-		
-// 		if (srctype != 0 || dsttype != 0) {
-// 			// Convert to geocentric coordinates.
-// 			geodetic_to_geocentric(srctype, point);
-			
-// 			// Convert between datums
-// 			if (srctype != 0) {
-// 				geocentric_to_wgs84(point);
-// 			}
-			
-// 			if (dsttype != 0) {
-// 				geocentric_from_wgs84(point);
-// 			}
-			
-// 			// Convert back to geodetic coordinates
-// 			geocentric_to_geodetic(dsttype, point);
-// 		}
-// 	}
-
-// void geo2tm( GeoPoint in_pt, GeoPoint out_pt) {
-// 		double x, y;
-		
-// 		transform(GEO, dsttype, in_pt);
-// 		double delta_lon = in_pt.x - m_arLonCenter[dsttype];
-// 		double sin_phi = Math.sin(in_pt.y);
-// 		double cos_phi = Math.cos(in_pt.y);
-
-// 		if (m_Ind[dsttype] != 0) {
-// 			double b = cos_phi * Math.sin(delta_lon);
-
-// 			if ((Math.abs(Math.abs(b) - 1.0)) < EPSLN) {
-// 				//Log.d("무한대 에러");
-// 				//System.out.println("무한대 에러");
-// 			}
-// 		} else {
-// 			double b = 0;
-// 			x = 0.5 * m_arMajor[dsttype] * m_arScaleFactor[dsttype] * Math.log((1.0 + b) / (1.0 - b));
-// 			double con = Math.acos(cos_phi * Math.cos(delta_lon) / Math.sqrt(1.0 - b * b));
-
-// 			if (in_pt.y < 0) {
-// 				con = con * -1;
-// 				y = m_arMajor[dsttype] * m_arScaleFactor[dsttype] * (con - m_arLatCenter[dsttype]);
-// 			}
-// 		}
-
-// 		double al = cos_phi * delta_lon;
-// 		double als = al * al;
-// 		double c = m_Esp[dsttype] * cos_phi * cos_phi;
-// 		double tq = Math.tan(in_pt.y);
-// 		double t = tq * tq;
-// 		double con = 1.0 - m_Es[dsttype] * sin_phi * sin_phi;
-// 		double n = m_arMajor[dsttype] / Math.sqrt(con);
-// 		double ml = m_arMajor[dsttype] * mlfn(e0fn(m_Es[dsttype]), e1fn(m_Es[dsttype]), e2fn(m_Es[dsttype]), e3fn(m_Es[dsttype]), in_pt.y);
-
-// 		out_pt.x = m_arScaleFactor[dsttype] * n * al * (1.0 + als / 6.0 * (1.0 - t + c + als / 20.0 * (5.0 - 18.0 * t + t * t + 72.0 * c - 58.0 * m_Esp[dsttype]))) + m_arFalseEasting[dsttype];
-// 		out_pt.y = m_arScaleFactor[dsttype] * (ml - dst_m[dsttype] + n * tq * (als * (0.5 + als / 24.0 * (5.0 - t + 9.0 * c + 4.0 * c * c + als / 30.0 * (61.0 - 58.0 * t + t * t + 600.0 * c - 330.0 * m_Esp[dsttype]))))) + m_arFalseNorthing[dsttype];
-// 	}
 };
 
 #endif
