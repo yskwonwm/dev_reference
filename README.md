@@ -100,7 +100,7 @@ $ g++ -o test main.cpp -lm
 * [Vincenty's formula](https://www.movable-type.co.uk/scripts/latlong-vincenty.html)
 * [Haversine formula](https://en.wikipedia.org/wiki/Haversine_formula)
 * [Spheical Law of Cosines](https://en.wikipedia.org/wiki/Spherical_law_of_cosines)
-* [Equirectangular approximation](https://en.wikipedia.org/wiki/Equirectangular_projection)
+* [Equirectangular projection](https://en.wikipedia.org/wiki/Equirectangular_projection)
 * [Calculate distance](https://www.movable-type.co.uk/scripts/latlong.html)
 * [좌표계와 투영법](https://velog.io/@717lumos/Localization-%EC%A2%8C%ED%91%9C%EA%B3%84%EC%99%80-%ED%88%AC%EC%98%81%EB%B2%95)
 * [좌표계 관련 설명](https://hmjkor.tistory.com/483)
