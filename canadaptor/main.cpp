@@ -37,10 +37,11 @@ int main(int argc, char **argv){
   obj.run();
 
 	//sleep(1);
-   while(state){      
-      sleep(5);
-      obj.sendtest();
-   }
+    while(state){      
+       
+       obj.sendtest();
+       sleep(2);
+    }
   
   cout << "***can test end!!!***" << endl;
   return 0;

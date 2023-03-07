@@ -265,11 +265,54 @@ void CanAdaptor::postMessageByType(byte* data, unsigned int canid, string device
 
     int (CanAdaptor::*pFunc)(vector<byte>, unsigned int, char*) = &CanAdaptor::send;
     function<void(vector<byte>, unsigned int, char*)> postMessagefunc = move(bind(pFunc, this, placeholders::_1, placeholders::_2, placeholders::_3));
-
+    
     //auto result = std::async(std::launch::async, postMessagefunc,body, canid, (char*)device.c_str());
     thread sendthread(postMessagefunc, body, canid, (char*)device.c_str());
     sendthread.detach();
     //sendthread.join();
+};
+
+/**
+* @brief Each data type is transmitted through the CAN network.
+* @details 
+* @param body transmission body
+* @param canid can id
+* @param device can channel 
+* @param duration can sandingduration (milliseconds)
+* @return  void
+* @warning 
+* @exception
+*/
+void CanAdaptor::postMessageByType(byte* data, unsigned int canid, string device,int duration){
+
+    byte temp[CAN_MAX_DLEN];
+    //byte* body = makeframebody(temp,data);
+    memcpy(temp,(void*)data,CAN_MAX_DLEN);    
+    vector<byte> body; 
+    for (byte value : temp){
+         body.emplace_back(value);
+    }
+
+    int (CanAdaptor::*pFunc)(vector<byte>, unsigned int, char*) = &CanAdaptor::send;
+    function<void(vector<byte>, unsigned int, char*)> postMessagefunc = move(bind(pFunc, this, placeholders::_1, placeholders::_2, placeholders::_3));
+     
+     std::thread([postMessagefunc, duration,body, canid, device]() {
+        while (true){
+         //   auto start = std::chrono::high_resolution_clock::now();
+            auto ms = std::chrono::steady_clock::now() + std::chrono::milliseconds(duration);            
+            postMessagefunc(body, canid, (char*)device.c_str());       
+            
+            if ( duration <= 0 ){     
+              return; // 반복 없음
+            }
+
+            std::this_thread::sleep_until(ms);
+            //std::this_thread::sleep_for(std::chrono::milliseconds(duration));            
+            auto finish = std::chrono::high_resolution_clock::now();            
+            auto int_s = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start);            std::cout << "elapsed time is " << int_s.count() << " ms )" << std::endl;                        
+            
+        }
+    }).detach();
 };
 
 /**

@@ -90,7 +90,8 @@ class CanAdaptor {
     void postMessageByType(iECU_Control_Steering body,int msgid,string device);
     void postMessageByType(Mode_Control_Flag body,int msgid,string device);
     void postMessageByType(byte* body, unsigned int canid, string device );
-        
+    void postMessageByType(byte* data, unsigned int canid, string device,int duration );
+
   public:   
     int initialize(bool endian); //< 초기화
     void release(); //< 종료
@@ -339,6 +340,21 @@ class CanAdaptor {
       byte body[CAN_MAX_DLEN];	         
 	    memcpy(body,(void*)&structTypeData,CAN_MAX_DLEN);                
       postMessageByType(body,msgid,device);      
+      //2) 중간에 타입별로 처리가 필요한 경우 아래 사용
+      //postMessageByType(structType,msgid,device);      
+   };
+
+    template<typename T>
+    void postCanMessage(T structTypeData,int msgid,string device,int duration){ 
+      //cout <<  "post msg "<< endl;
+      string msg("[send]<");
+      msg.append(std::to_string(msgid)).append("> ").append(typeid(structTypeData).name());
+      cout << msg << endl;
+      //byte* body = makeframebody(temp,data);
+      //1) 타입별로 별고 처리가 필요하지 않은 경우 아래 사용
+      byte body[CAN_MAX_DLEN];	         
+	    memcpy(body,(void*)&structTypeData,CAN_MAX_DLEN);                
+      postMessageByType(body,msgid,device,duration);      
 
       //2) 중간에 타입별로 처리가 필요한 경우 아래 사용
       //postMessageByType(structType,msgid,device);      
