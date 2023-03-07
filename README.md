@@ -38,8 +38,7 @@ canadaptor/
 ### Complie
  ```
 # can adaptor 
-$ g++ -o canadaptor main.cpp can_adaptor.cpp can_dump.cpp lib.c -lpthread    
-
+$ g++ -o canadaptor main.cpp can_adaptor.cpp can_send.cpp can_dump.cpp lib.c -lpthread    
 
 # can send
 $ g++ -o cansend cansend.c lib.c
