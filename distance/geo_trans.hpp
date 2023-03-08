@@ -4,19 +4,15 @@
 #include <math.h>
 
 
-
 struct GeoPoint {
 	double x;
 	double y;
 	double z;
 };
 
-
-
 class GeoTrans {
 		
-  public  : 
-	
+  public  : 	
 	static int person_count_;  
     enum GEOTRANS { GEO ,KATEC ,TM, GRS80 };
 	
@@ -130,7 +126,6 @@ class GeoTrans {
 	double datum_params[3];
 	
   private :
-
 	double D2R(double degree) {
 		//printf("D2R = %f ,%f , %f  , %f, %f \n",degree,M_PI, (M_PI / 180.0),degree* (M_PI / 180.0),degree*0.017453);
 		return degree* M_PI / 180.0;
@@ -165,8 +160,7 @@ class GeoTrans {
 		return asin(value);
 	}
   
-  private  : 
-
+  private: 
 	GeoPoint convert(int srctype, int dsttype, GeoPoint in_pt) {
 		GeoPoint tmpPt;
 		GeoPoint out_pt;		
@@ -190,8 +184,7 @@ class GeoTrans {
 		}
 //printf("[CONV] %f,%f,  %f,%f\n",tmpPt.x, tmpPt.y, out_pt.x, out_pt.y);
 		return out_pt;
-	}
-	
+	}	
   
 	void geo2tm(int dsttype, GeoPoint in_pt, GeoPoint& out_pt) {
 		double x, y;
@@ -234,7 +227,6 @@ class GeoTrans {
 
 		out_pt.x = m_arScaleFactor[dsttype] * n * al * (1.0 + als / 6.0 * (1.0 - t + c + als / 20.0 * (5.0 - 18.0 * t + t * t + 72.0 * c - 58.0 * m_Esp[dsttype]))) + m_arFalseEasting[dsttype];
 		out_pt.y = m_arScaleFactor[dsttype] * (ml - dst_m[dsttype] + n * tq * (als * (0.5 + als / 24.0 * (5.0 - t + 9.0 * c + 4.0 * c * c + als / 30.0 * (61.0 - 58.0 * t + t * t + 600.0 * c - 330.0 * m_Esp[dsttype]))))) + m_arFalseNorthing[dsttype];
-
 	}
 
 
@@ -332,8 +324,6 @@ class GeoTrans {
 
 		return getDistancebyGeo(pt1, pt2);
 	}
-
-
 
 	long getTimebySec(double distance) {
 		return round(3600 * distance / 4);
@@ -528,12 +518,10 @@ class GeoTrans {
 	  return;
 	} // geocentric_to_geodetic()
 
-
-
 	/****************************************************************/
 	// geocentic_to_wgs84(defn, p )
-   //  defn = coordinate system definition,
-	//  p = point to transform in geocentric coordinates (x,y,z)
+    // defn = coordinate system definition,
+	// p = point to transform in geocentric coordinates (x,y,z)
 	void geocentric_to_wgs84(GeoPoint p) {
 
 	  //if( defn.datum_type == PJD_3PARAM )
@@ -548,8 +536,8 @@ class GeoTrans {
 
 	/****************************************************************/
 	// geocentic_from_wgs84()
-	//  coordinate system definition,
-	//  point to transform in geocentric coordinates (x,y,z)
+	// coordinate system definition,
+	// point to transform in geocentric coordinates (x,y,z)
 	void geocentric_from_wgs84(GeoPoint p) {
 
 	  //if( defn.datum_type == PJD_3PARAM ) 

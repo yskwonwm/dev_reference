@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
     double P2_longitude = 130.6163861;
 
     resutlt_distance  result; 
-    CalcDiatance calc;
+    CalcDistance calc;
 
     if ( argc == 5 ){ 
       P1_latitude = atof(argv[1]);

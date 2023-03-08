@@ -298,7 +298,7 @@ void CanAdaptor::postMessageByType(byte* data, unsigned int canid, string device
      
      std::thread([postMessagefunc, duration,body, canid, device]() {
         while (true){
-         //   auto start = std::chrono::high_resolution_clock::now();
+           // auto start = std::chrono::high_resolution_clock::now();
             auto ms = std::chrono::steady_clock::now() + std::chrono::milliseconds(duration);            
             postMessagefunc(body, canid, (char*)device.c_str());       
             
@@ -308,8 +308,9 @@ void CanAdaptor::postMessageByType(byte* data, unsigned int canid, string device
 
             std::this_thread::sleep_until(ms);
             //std::this_thread::sleep_for(std::chrono::milliseconds(duration));            
-            auto finish = std::chrono::high_resolution_clock::now();            
-            auto int_s = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start);            std::cout << "elapsed time is " << int_s.count() << " ms )" << std::endl;                        
+            // auto finish = std::chrono::high_resolution_clock::now();            
+            // auto int_s = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start);           
+            // std::cout << "elapsed time is " << int_s.count() << " ms )" << std::endl;                        
             
         }
     }).detach();
