@@ -86,13 +86,14 @@ longitude and Latitude coordinate distance calculation
 경위도 좌표계 거리계산 소스 파일
 
 distance/
+* calc_distance.cpp
 * calc_distance.hpp
 * geo_trans.hpp
 * main.cpp
     
 ### Complie
 ```
-$ g++ -o test main.cpp -lm
+$ g++ -o test main.cpp calc_distance.cpp -lm
 
 ```
 ### Reference 
