@@ -113,23 +113,21 @@ static int idx2dindex(int ifidx, int socket)
 
 
 int main(int argc, char **argv)
-{	
-	fprintf(stderr, "argc, %d -  argv[1], %s \n", argc,argv[1]);
-	
+{
 	int fd_epoll;
 	struct epoll_event events_pending[MAXSOCK];
 	struct epoll_event event_setup = {
 		.events = EPOLLIN, /* prepare the common part */
 	};
-	
+
     struct can_frame frame2;
 	struct can_filter candil;
-	unsigned char down_causes_exit = 1;	
+	unsigned char down_causes_exit = 1;
 	unsigned char view = 0;
-	
+
 	int rcvbuf_size = 0;
 	int num_events;
-	int currmax, numfilter;	
+	int currmax, numfilter;
 	char *ptr, *nptr;
 	struct sockaddr_can addr;
 	char ctrlmsg[CMSG_SPACE(sizeof(struct timeval)) +
@@ -145,7 +143,7 @@ int main(int argc, char **argv)
 	struct ifreq ifr;
 	struct timeval tv;
 	int timeout_ms = -1; /* default to no timeout */
-	
+
 
 	signal(SIGTERM, sigterm);
 	signal(SIGHUP, sigterm);
@@ -173,8 +171,8 @@ int main(int argc, char **argv)
 		ptr = argv[optind+i];
 		nptr = strchr(ptr, ',');
 
-//		fpringf(stdout,"open %d '%s'.\n", i, ptr);
-		fprintf(stdout,"open %d '%s'. optind : %d \n", i, ptr,optind);
+		fprintf(stdout,"open %d '%s'.\n", i, ptr);
+//		fprintf(stdout,"open %d '%s'. optind : %d \n", i, ptr,optind);
 		obj->s = socket(PF_CAN, SOCK_RAW, CAN_RAW);
 		if (obj->s < 0) {
 			perror("socket");
@@ -188,7 +186,7 @@ int main(int argc, char **argv)
 		}
 
 		obj->cmdlinename = ptr; /* save pointer to cmdline name of this socket */
-fprintf(stdout,"nptr : '%s',ptr : '%s' \n", nptr,ptr);
+//fprintf(stdout,"nptr : '%s',ptr : '%s' \n", nptr,ptr);
 		if (nptr)
 			nbytes = nptr - ptr;  /* interface name is up the first ',' */
 		else
@@ -218,7 +216,7 @@ fprintf(stdout,"nptr : '%s',ptr : '%s' \n", nptr,ptr);
 		} else
 			addr.can_ifindex = 0; /* any can interface */
 
-		
+
 
 		if (nptr) {
 			/* found a ',' after the interface name => check for filters */
@@ -229,9 +227,9 @@ fprintf(stdout,"nptr : '%s',ptr : '%s' \n", nptr,ptr);
 				numfilter++;
 				ptr++; /* hop behind the ',' */
 				ptr = strchr(ptr, ','); /* exit condition */
-				fprintf(stdout,"%d ptr : '%s' \n", numfilter,ptr);
-			}			
-			
+			//	fprintf(stdout,"%d ptr : '%s' \n", numfilter,ptr);
+			}
+
 			rfilter = (struct can_filter*)malloc(sizeof(struct can_filter) * numfilter);
 			if (!rfilter) {
 				fprintf(stderr, "Failed to create filter space!\n");
@@ -305,7 +303,7 @@ fprintf(stdout,"nptr : '%s',ptr : '%s' \n", nptr,ptr);
 		if (bind(obj->s, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 			perror("bind");
 			return 1;
-		}		
+		}
 	}
 
 	/* these settings are static and can be held out of the hot path */
@@ -341,7 +339,7 @@ fprintf(stdout,"nptr : '%s',ptr : '%s' \n", nptr,ptr);
 
 			nbytes = recvmsg(obj->s, &msg, 0);
 			idx = idx2dindex(addr.can_ifindex, obj->s);
-//fprintf(stdout, "idx2dindex %d , %d\n",idx,addr.can_ifindex);
+fprintf(stdout, "read size %d \n",nbytes);
 
 			if (nbytes < 0) {
 				if ((errno == ENETDOWN) && !down_causes_exit) {
@@ -366,7 +364,7 @@ fprintf(stdout,"nptr : '%s',ptr : '%s' \n", nptr,ptr);
 				view |= CANLIB_VIEW_INDENT_SFF;
 
 			printf("%*s", max_devname_len, devname[idx]);
-        
+
 			fprint_long_canframe(stdout, &frame, NULL, view, maxdlen);
 			printf("\n");
 

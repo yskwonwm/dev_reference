@@ -10,6 +10,7 @@ struct resutlt_distance{
   double distance;
   double distance_x;
   double distance_y;
+  double degree;
 };
 
 enum {VINCENTY,HAVERSINE,LAWCOSINES,KTM};
@@ -40,6 +41,7 @@ class CalcDistance {
     double distanceInMeterByVincenty(double lat1, double lon1, double lat2, double lon2);
     double distanceInMeterByHaversine(double x1, double y1, double x2, double y2);
     double distanceInMeterByTM(double lat1, double lon1, double lat2, double lon2);
+    double getBearingBetweenPoints(double lat1, double lon1, double lat2, double lon2);
 };
 
 #endif

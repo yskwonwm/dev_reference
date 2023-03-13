@@ -2,13 +2,13 @@
 #ifndef CAN_DEFINE_H
 #define CAN_DEFINE_H
 
-#define  CNV_SPEED_FACTOR 3.6 
-#define  RESOLUTION_SPEED_CTRL 10 
-#define  RESOLUTION_STEERING_CTRL 10 
+#define  CNV_SPEED_FACTOR 3.6
+#define  RESOLUTION_SPEED_CTRL 10
+#define  RESOLUTION_STEERING_CTRL 10
 
-#define  OFFSET_STEERING 30 
-#define  MAX_STEERING 30 
-#define  MIN_STEERING -30 
+#define  OFFSET_STEERING 30
+#define  MAX_STEERING 30
+#define  MIN_STEERING -30
 
 enum MSG_ID {
   VCU_EPS_CONTROL_REQUEST = 0x169,
@@ -20,14 +20,15 @@ enum MSG_ID {
   IECU_CONTROL_ACCELERATE	=	0X504,
   IECU_CONTROL_BRAKE	=	0X503,
   IECU_CONTROL_STEERING	=	0X502,
-  MODE_CONTROL_FLAG	=	0X501
+  MODE_CONTROL_FLAG	=	0X501,
+  TORQUE_FEEDBACK = 0x10
 };
 
 enum SVC_ID {
   CONTROL_STEERING,
   CONTROL_ACCELERATE,
   CONTROL_HARDWARE,
-  TORQUE_FEEDBACK
+  RPM_FEEDBACK
 };
 
 enum ACC_GEAR {
@@ -39,13 +40,6 @@ enum ACC_GEAR {
 
 enum CHANNEL_TYPE { CAN0,CAN1 } ;
 static const char *device_type[] =
-        { "vcan0", "vcan1"};
+        { "can0", "can0"};
 
-bool is_big_endian()
-{
-  char buf[2] = {0,1};
-  unsigned short *val = reinterpret_cast<unsigned short*>(buf);
-  return *val == 1;
-}
-
-#endif 
+#endif

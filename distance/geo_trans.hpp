@@ -2,7 +2,7 @@
 #define GEOTRANS_H
 
 #include <math.h>
-
+#include <cstdio>
 
 struct GeoPoint {
 	double x;
@@ -182,7 +182,7 @@ class GeoTrans {
 			//out_pt.x = round(out_pt.x);
 			//out_pt.y = round(out_pt.y);
 		}
-//printf("[CONV] %f,%f,  %f,%f\n",tmpPt.x, tmpPt.y, out_pt.x, out_pt.y);
+//printf("[CONV] (RAD) : %f,%f,  (TM) : %f,%f\n",tmpPt.x, tmpPt.y, out_pt.x, out_pt.y);
 		return out_pt;
 	}	
   

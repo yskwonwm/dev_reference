@@ -1,3 +1,6 @@
+#ifndef CANDBC_H
+#define CANDBC_H
+
 #pragma pack(push, 1)
 
 struct iECU_Control_Hardware{
@@ -102,6 +105,7 @@ struct MCU_Torque_Feedback{
 
 #pragma pack(pop)
 
+#endif
 /*
 struct VCU_DBS_Request{
 unsigned long reserved1:17;

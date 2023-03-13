@@ -1,6 +1,6 @@
 
 #include <iostream>
-#include <unistd.h> 
+#include <unistd.h>
 #include <signal.h>
 
 #include "data_relayer.hpp"
@@ -20,7 +20,7 @@ static void rpmCallback(int remote_f_horn
                     ,int remote_b_motor_holding_brake
                     ){
 
-  cout << "[main] callback Remote_Control_IO : " << (int)remote_f_horn 
+  cout << "[main] callback Remote_Control_IO : " << (int)remote_f_horn
   << "," << (int)remote_d_headlight
   << "," << (int)remote_b_motor_holding_brake
   << endl;
@@ -29,20 +29,27 @@ static void rpmCallback(int remote_f_horn
 int main(int argc, char **argv){
 
 
-	signal(SIGINT, sigterm);  
+  signal(SIGINT, sigterm);
 
   DataRelayer obj;
 
-  obj.RegistCallback(rpmCallback);
+  // register receive callback function
+  obj.RegistRpmCallback(rpmCallback);
   obj.run();
 
 	//sleep(1);
-    while(state){      
-       
-       obj.sendtest();
-       sleep(2);
-    }
-  
+   // obj.sendtest();
+  // send control command 
+  obj.control_hardware(false, true, true, false); //bool horn, bool head_light, bool right_light, bool left_light
+  obj.control_steering(20); // float angle
+  obj.control_vel(4); // float vel
+
+  while(state){
+
+    //obj.sendtest();
+    sleep(2);
+  }
+
   cout << "***can test end!!!***" << endl;
   return 0;
 }
