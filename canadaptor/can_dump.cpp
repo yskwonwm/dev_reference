@@ -59,12 +59,13 @@ int CanDump::open(int argc, std::vector<std::string> argval,CanAdaptor* pClassTy
 
 	 for ( string arg : argval ){
 		argv[idx++] = arg;
+
+		//fprintf(stdout, "call open !!! , %s\n", arg);
 	 };
 
-	fprintf(stdout, "call open !!! , %s\n", (char*)argv[0].c_str());
-	fprintf(stdout, "call open !!! , %s\n", (char*)argv[1].c_str());
-
-	int fd_epoll;
+	// fprintf(stdout, "call open !!! , %s\n", (char*)argv[0].c_str());
+	// fprintf(stdout, "call open !!! , %s\n", (char*)argv[1].c_str());
+	
 	struct epoll_event events_pending[MAXSOCK];
 	struct epoll_event event_setup = {
 		.events = EPOLLIN, /* prepare the common part */
@@ -75,7 +76,7 @@ int CanDump::open(int argc, std::vector<std::string> argval,CanAdaptor* pClassTy
 	
 	int rcvbuf_size = 0;
 	int num_events;
-	int currmax, numfilter;	
+	int numfilter;	
 	char *ptr, *nptr;
 	struct sockaddr_can addr;
 	char ctrlmsg[CMSG_SPACE(sizeof(struct timeval)) +
@@ -87,11 +88,12 @@ int CanDump::open(int argc, std::vector<std::string> argval,CanAdaptor* pClassTy
 	struct can_filter *rfilter;
 	can_err_mask_t err_mask;
 	struct canfd_frame frame;
-	int nbytes, i, maxdlen;
+	int nbytes, sockCnt, maxdlen;
 	struct ifreq ifr;
 	struct timeval tv;
 	int timeout_ms = -1; /* default to no timeout */
 
+    bool retry = true; 
 	// signal(SIGTERM, sigterm);
 	// signal(SIGHUP, sigterm);
 	// signal(SIGINT, sigterm);
@@ -106,29 +108,35 @@ int CanDump::open(int argc, std::vector<std::string> argval,CanAdaptor* pClassTy
 		return 1;
 	}
 
+while(retry)	{
+
+try{
 	fd_epoll = epoll_create(1);
 	if (fd_epoll < 0) {
 		perror("epoll_create");
 		return 1;
 	}
-	for (i = 0; i < currmax; i++) {
-		struct if_info* obj = &sock_info[i];
-		fprintf(stdout, "5)call open !!!  %s\n", (char*)argv[i].c_str());
-		ptr = (char*)argv[i].c_str();
+
+	for (sockCnt = 0; sockCnt < currmax; sockCnt++) {
+		struct if_info* obj = &sock_info[sockCnt];
+		fprintf(stdout, "5)call open !!!  %s\n", (char*)argv[sockCnt].c_str());
+		ptr = (char*)argv[sockCnt].c_str();
 		nptr = strchr(ptr, ',');
 
-//       fprintf(stdout,"open '%s'\n",ptr);
+       
 		obj->s = socket(PF_CAN, SOCK_RAW, CAN_RAW);
 
 		if (obj->s < 0) {
 			perror("socket");
-			return 1;
+			throw DEVICE_EXCEPTION;
+			//return 1;
 		}
 
 		event_setup.data.ptr = obj; /* remember the instance as private data */
 		if (epoll_ctl(fd_epoll, EPOLL_CTL_ADD, obj->s, &event_setup)) {
 			perror("failed to add socket to epoll");
-			return 1;
+			throw DEVICE_EXCEPTION;
+			//return 1;
 		}
 		obj->cmdlinename = ptr; /* save pointer to cmdline name of this socket */
 
@@ -154,7 +162,8 @@ int CanDump::open(int argc, std::vector<std::string> argval,CanAdaptor* pClassTy
 		if (strcmp(ANYDEV, ifr.ifr_name) != 0) {
 			if (ioctl(obj->s, SIOCGIFINDEX, &ifr) < 0) {
 				perror("SIOCGIFINDEX");
-				exit(1);
+				throw DEVICE_EXCEPTION;
+				//exit(1);
 			}
 			addr.can_ifindex = ifr.ifr_ifindex;
 		} else
@@ -238,7 +247,7 @@ int CanDump::open(int argc, std::vector<std::string> argval,CanAdaptor* pClassTy
 
 				/* Only print a warning the first time we detect the adjustment */
 				/* n.b.: The wanted size is doubled in Linux in net/sore/sock.c */
-				if (!i && curr_rcvbuf_size < rcvbuf_size * 2)
+				if (!sockCnt && curr_rcvbuf_size < rcvbuf_size * 2)
 					fprintf(stderr, "The socket receive buffer size was "
 						"adjusted due to /proc/sys/net/core/rmem_max.\n");
 			}
@@ -257,6 +266,7 @@ int CanDump::open(int argc, std::vector<std::string> argval,CanAdaptor* pClassTy
 	msg.msg_iovlen = 1;
 	msg.msg_control = &ctrlmsg;
 
+    
 	while (running) {
 
 		num_events = epoll_wait(fd_epoll, events_pending, currmax, timeout_ms);
@@ -273,10 +283,14 @@ int CanDump::open(int argc, std::vector<std::string> argval,CanAdaptor* pClassTy
 			continue;
 		}
 
-		for (i = 0; i < num_events; i++) {  /* check waiting CAN RAW sockets */
+		for (int i = 0; i < num_events; i++) {  /* check waiting CAN RAW sockets */
 			struct if_info* obj = (struct if_info*)events_pending[i].data.ptr;
 			int idx;
 
+	        if (ioctl(obj->s, SIOCGIFNAME, &ifr) < 0){
+		      perror("SIOCGIFNAME");	  
+			  throw DEVICE_EXCEPTION;
+		    }
 			/* these settings may be modified by recvmsg() */
 			iov.iov_len = sizeof(frame);
 			msg.msg_namelen = sizeof(addr);
@@ -295,13 +309,16 @@ int CanDump::open(int argc, std::vector<std::string> argval,CanAdaptor* pClassTy
 			// 	return 1;
 			// }
 
+
 			if ((size_t)nbytes == CAN_MTU)
 				maxdlen = CAN_MAX_DLEN;
 			else if ((size_t)nbytes == CANFD_MTU)
 				maxdlen = CANFD_MAX_DLEN;
 			else {
-				fprintf(stderr, "read: incomplete CAN frame\n");
-				return 1;
+				fprintf(stderr, "read: incomplete CAN frame %ld\n",(size_t)nbytes);
+			    sleep(3);
+			    num_events = 0;
+			    throw DEVICE_EXCEPTION;
 			}
 
 			/* once we detected a EFF frame indent SFF frames accordingly */
@@ -321,16 +338,35 @@ int CanDump::open(int argc, std::vector<std::string> argval,CanAdaptor* pClassTy
 			handler(frame.data,frame.can_id);
 		}
 	}
+	}catch(int e){
+		//fprintf(stdout, "throw catch %d\n",e);
 
-   fprintf(stdout, "end while in can_dump\n");
+		if (e == DEVICE_EXCEPTION){
+			socketclose();
+			//fprintf(stdout, "exception %d\n",e);
+			sleep(RETRY_TIME);
+			retry = true;
+			continue;
+		}
+	}
+} 
 
-	for (i = 0; i < currmax; i++)
-		close(sock_info[i].s);
+    fprintf(stdout, "end while in can_dump\n");
 
-	close(fd_epoll);
+    socketclose();
 
     fprintf(stdout, "can receive end\n");
 	return 0;
+}
+
+void CanDump::socketclose(){
+
+	for (int i = 0; i < currmax; i++){
+		close(sock_info[i].s);
+		memset(&sock_info[i],0x00,sizeof(if_info ));
+	}
+	close(fd_epoll);
+	fprintf(stdout, "close socket\n");
 }
 
 // int CanDump::idx2dindex(int ifidx, int socket)

@@ -28,10 +28,12 @@ class DataRelayer {
 
   private:
     //void(*fpoint)(int,int,int);
-    typedef std::function<void(int,int,int)> func_fpm_callback; // Callback function pointer variable definition
+    typedef std::function<void(int,int)> func_fault_callback; // Callback function pointer variable definition
+    typedef std::function<void(int,int,int)> func_rpm_callback; // Callback function pointer variable definition
     //typedef std::function<void(int,int,int)> func_other_callback; // Callback function pointer variable definition
 
-    func_fpm_callback rpmCallback; // Callback function pointer variable definition
+    func_fault_callback faultCallback;
+    func_rpm_callback rpmCallback; // Callback function pointer variable definition
     //func_other_callback otherCallback; // Callback function pointer variable definition
 
     bool system_endian = 0;
@@ -50,8 +52,12 @@ class DataRelayer {
     void control_hardware(bool horn, bool head_light, bool right_light, bool left_light);
 
     void RegistRpmCallback(void(*pfunc)(int,int,int));
+    void RegistFaultCallback(void(*pfunc)(int,int));
+
     template<typename T> 
     void RegistRpmCallback(T *pClassType,void(T::*pfunc)(int,int,int));
+    template<typename T> 
+    void RegistFaultCallback(T *pClassType,void(T::*pfunc)(int,int));
 
   private:
     void setmsgMap(int svcid,int msgid,string device);

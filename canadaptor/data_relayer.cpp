@@ -51,7 +51,7 @@ void DataRelayer::control_hardware(bool horn, bool head_light, bool right_light,
 
 
 /**
-* @brief Register a callback function
+* @brief Register a RPM callback function
 * @details Register a callback function (static funcion)
 * @param pfunc function point
 * @return void
@@ -62,7 +62,18 @@ void DataRelayer::RegistRpmCallback(void(*pfunc)(int,int,int)){
 };
 
 /**
-* @brief Register a callback function
+* @brief Register a FAULT callback function
+* @details Register a callback function (static funcion)
+* @param pfunc function point
+* @return void
+* @exception
+*/
+void DataRelayer::RegistFaultCallback(void(*pfunc)(int,int)){
+    faultCallback = static_cast<void(*)(int,int)>(pfunc);
+};
+
+/**
+* @brief Register a RPM callback function
 * @details Registering class member function callbacks (std:funcion)
 * @param pfunc function point
 * @return void
@@ -70,9 +81,25 @@ void DataRelayer::RegistRpmCallback(void(*pfunc)(int,int,int)){
 */
 template<typename T>
 void DataRelayer::RegistRpmCallback(T *pClassType,void(T::*pfunc)(int,int,int)){
-    rpmCallback = move(bind(pfunc, pClassType, placeholders::_1
+    rpmCallback = move(bind(pfunc, pClassType
+    , placeholders::_1
     , placeholders::_2
     , placeholders::_3
+    ));
+}
+
+/**
+* @brief Register a FAULT callback function
+* @details Registering class member function callbacks (std:funcion)
+* @param pfunc function point
+* @return void
+* @exception
+*/
+template<typename T>
+void DataRelayer::RegistFaultCallback(T *pClassType,void(T::*pfunc)(int,int)){
+    faultCallback = move(bind(pfunc, pClassType
+    , placeholders::_1
+    , placeholders::_2
     ));
 }
 
@@ -222,6 +249,8 @@ void DataRelayer::handler_Remote_Control_IO (Remote_Control_IO msg){
 */
 void DataRelayer::handler_DBS_Status (DBS_Status msg){
     cout << "[recv] DBS_Status : " << (int)msg.dbs_fault_code <<","<<(int)msg.dbs_hp_pressure <<","<<(int)msg.dbs_system_status << endl;
+
+    faultCallback(CAN_NO_FAULT,msg.dbs_fault_code);
 }
 
 /**
@@ -271,7 +300,7 @@ void DataRelayer::run(){
     // canlib->setHandler<DataRelayer>(this,&DataRelayer::handler_VCU_EPS_Control_Request,VCU_EPS_CONTROL_REQUEST,device_type[CAN1]);
     // canlib->setHandler<DataRelayer>(this,&DataRelayer::handler_Remote_Control_Shake,REMOTE_CONTROL_SHAKE_2,device_type[CAN1]);
     // canlib->setHandler<DataRelayer>(this,&DataRelayer::handler_Remote_Control_IO,REMOTE_CONTROL_IO,device_type[CAN1]);
-    // canlib->setHandler<DataRelayer>(this,&DataRelayer::handler_DBS_Status,DBS_STATUS,device_type[CAN1]);
+    canlib->setHandler<DataRelayer>(this,&DataRelayer::handler_DBS_Status,DBS_STATUS,device_type[CAN1]);
     // canlib->setHandler<DataRelayer>(this,&DataRelayer::handler_VCU_DBS_Request,VCU_DBS_REQUEST,device_type[CAN1]);
     canlib->setHandler<DataRelayer>(this,&DataRelayer::handler_MCU_Torque_Feedback,TORQUE_FEEDBACK,device_type[CAN0]);
 
@@ -280,7 +309,22 @@ void DataRelayer::run(){
     //device.push_back(device_type[CAN1]);
     device.push_back(device_type[CAN0]);
 
-    int ret = canlib->open(device);
+    int ret = 0;
+   
+
+    while(canlib->open(device)){
+      cout << "open fail" << endl;
+      sleep(2);      
+    }
+    
+    while(canlib-> runControlFlag(1,device_type[CAN1])){
+      cout << "run config fail" << endl;
+      sleep(2);
+    }
+    //포트 오픈 체크 스레드
+    cout << "Start checking for can channel fault" << endl;
+    canlib->checkSocketStatus(device,faultCallback);
+    
 }
 
 /**

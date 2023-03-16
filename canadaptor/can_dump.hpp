@@ -20,6 +20,9 @@
 
 #define MAXANI 4
 
+#define DEVICE_EXCEPTION -1
+#define RETRY_TIME 2
+
 class CanAdaptor;
 
 /**
@@ -48,14 +51,18 @@ struct if_info { /* bundled information per open socket */
 class CanDump {
 
   struct if_info sock_info[MAXSOCK];
+  int fd_epoll;
+  int currmax;
 
   char *progname;
   char devname[MAXIFNAMES][IFNAMSIZ+1];
   int dindex[MAXIFNAMES];
   int max_devname_len; /* to prevent frazzled device name output */
+  
   //static const int canfd_on = 1;
 
   public:    
     int open(int argc, std::vector<std::string> argval,CanAdaptor* pClassType,void(CanAdaptor::*func)(unsigned char* data,int canid));
     int idx2dindex(int ifidx, int socket);
+    void socketclose();
 };

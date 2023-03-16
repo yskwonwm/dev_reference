@@ -20,6 +20,9 @@
 #define byte unsigned char
 //#define ONLY_SFF "C00007FF"
 #define ONLY_SFF "7FF"
+#define CAN_ALIVE_CHECKTIME 2 // second
+#define CAN_NO_FAULT 0x00 
+#define CAN_DEVICE_FAULT 0x01 
 
 
 class CanDump;
@@ -74,10 +77,9 @@ class CanAdaptor {
   private:
     //int socketopen(char* device );
     //void socketclose();
-    int send(vector<byte>  body, unsigned int msgid, char* device ); //< can network 연동, cansend.c 참조
-
-    int canopen(int arc,vector<string> argv,CanAdaptor*,void(CanAdaptor::*func)(unsigned char* data,int canid));
+    int  send(vector<byte>  body, unsigned int msgid, string device ); //< can network 연동, cansend.c 참조
     void receive(byte* data,int canid);
+    int  canopen(int arc,vector<string> argv,CanAdaptor*,void(CanAdaptor::*func)(unsigned char* data,int canid));
        
     void print_map_state(string name);
 
@@ -91,12 +93,18 @@ class CanAdaptor {
     void postMessageByType(Mode_Control_Flag body,int msgid,string device);
     void postMessageByType(byte* body, unsigned int canid, string device );
     void postMessageByType(byte* data, unsigned int canid, string device,int duration );
+    
+    int s_open(vector<string> device); 
+    int r_open(vector<string> device); 
+    
 
   public:   
-    int initialize(bool endian); //< 초기화
+    int  initialize(bool endian); //< 초기화
     void release(); //< 종료
-    int open(vector<string> device); //< open can channel, warning : callback function을 전부 등록후 호출한다.
-        
+    int  open(vector<string> device); //< open can channel, warning : callback function을 전부 등록후 호출한다.
+    int  runControlFlag(int flag, string device);
+    bool isConnected(string device);           
+    void checkSocketStatus(vector<string> device,std::function<void(int,int)> func);
    /**
     * @brief Returns a singleton object.
     * @details 
@@ -333,7 +341,7 @@ class CanAdaptor {
     void postCanMessage(T structTypeData,int msgid,string device){ 
       //cout <<  "post msg "<< endl;
       string msg("[send]<");
-      msg.append(std::to_string(msgid)).append("> ").append(typeid(structTypeData).name());
+      msg.append(std::to_string(msgid)).append("> ").append(typeid(structTypeData).name()).append(" : ").append(device);
       cout << msg << endl;
       //byte* body = makeframebody(temp,data);
       //1) 타입별로 별고 처리가 필요하지 않은 경우 아래 사용

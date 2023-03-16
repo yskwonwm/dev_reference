@@ -19,7 +19,8 @@ class CanSend {
     void socketclose();
     int send(std::vector<unsigned char> body, unsigned int msgid, char* device ); //< can network 연동, cansend.c 참조
     int socketopen(std::vector<std::string> device);
-    
+    bool isConnected(char* device);
+    bool isConnect();
 };
 
 #endif

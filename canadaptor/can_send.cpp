@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <unistd.h>
 #include <iostream>
@@ -10,7 +9,6 @@
 #include <linux/can.h>
 #include <linux/can/raw.h>
 #include <cstring>
-
 #include <net/if.h>
 
 #include "can_send.hpp"
@@ -29,6 +27,7 @@ using namespace std;
 */
 int CanSend::send(std::vector<unsigned char> data, unsigned int msgid, char* device ){
     
+    struct ifreq ifr;
     //byte* body = makeframebody(temp,data);
     unsigned char body[CAN_MAX_DLEN];	
     int idx = 0;
@@ -39,7 +38,7 @@ int CanSend::send(std::vector<unsigned char> data, unsigned int msgid, char* dev
     auto item = sockmap.find(device);
     if (item == sockmap.end()) {
         printf("device does not exist! ( %s )\r\n", device) ;
-        return 1;
+        return -1;
     } 
 
     int s = item->second;
@@ -54,8 +53,8 @@ int CanSend::send(std::vector<unsigned char> data, unsigned int msgid, char* dev
     
     /* send frame */
     if (write(s, &frame, required_mtu) != required_mtu) {
-	perror("write");
-	return 1;
+	    perror("write");
+	    return -1;
     }
 	
     //printf("  <data> = ");
@@ -73,18 +72,33 @@ int CanSend::send(std::vector<unsigned char> data, unsigned int msgid, char* dev
     return 0;
 }
 
+/**
+* @brief open the socket
+* @details 
+* @param device channel names
+* @return 
+* @warning
+* @exception
+*/
 int CanSend::socketopen(std::vector<std::string> device){
 
-   //printf("2) send socket open\n");
-   for (vector<string>::iterator iter = device.begin(); iter != device.end(); ++iter){
-     if ( socketopen((char*)iter->c_str()) != 0 ){
-		cout << "socke open fail" << endl;
-		return -1;
-     }   
-   }
-   return 0;
+  for (vector<string>::iterator iter = device.begin(); iter != device.end(); ++iter){
+    if ( socketopen((char*)iter->c_str()) != 0 ){
+		  perror("can device open fail");        
+		  return -1;
+    }   
+  }
+  return 0;
 }
 
+/**
+* @brief open the socket
+* @details 
+* @param device channel name
+* @return 
+* @warning
+* @exception
+*/
 int CanSend::socketopen(char* device )
 {    
     int ret;
@@ -100,27 +114,27 @@ int CanSend::socketopen(char* device )
 
     if (item != sockmap.end()) {
         printf("device exists! -  %s ; %d", item->first.c_str(),item->second) ;
-        return 0;
+        return -1;
     } 
 
     /* open socket */
     if ((s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-	perror("socket");
-	return 1;
+	    perror("socket");
+	    return -1;
     }
 
     strcpy(ifr.ifr_name, device);
     ret = ioctl(s, SIOCGIFINDEX, &ifr);
     if (ret < 0) {
-        perror("ioctl interface index failed!");
-        return 1;
+      perror("ioctl interface index failed!");
+      return -1;
     }
 
     ifr.ifr_name[IFNAMSIZ - 1] = '\0';
     ifr.ifr_ifindex = if_nametoindex(ifr.ifr_name);
     if (!ifr.ifr_ifindex) {
-	perror("if_nametoindex");
-	return 1;
+	    perror("if_nametoindex");
+	    return -1;
     }
 
     memset(&addr, 0, sizeof(addr));
@@ -134,16 +148,25 @@ int CanSend::socketopen(char* device )
     setsockopt(s, SOL_CAN_RAW, CAN_RAW_FILTER, NULL, 0);
 
     if (bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-	  perror("bind");
-	  return 1;
+	    perror("bind");
+	    return -1;
     }
 
     sockmap.insert(make_pair(device,s));
 
-    cout << "socke device open (" << device << ", sockfd:" << s << " )"<<endl;
+    printf("can device open ( %s ) , sockfd : %d\n",device,s );
+    
     return 0;
 }
 
+/**
+* @brief close the socket
+* @details close the socketof all channels stored in the this object
+* @param 
+* @return 
+* @warning
+* @exception
+*/
 void CanSend::socketclose(){
 
   for (auto iter = sockmap.begin(); iter !=  sockmap.end(); iter++){
@@ -152,4 +175,62 @@ void CanSend::socketclose(){
      printf("socket close(%s,%d)\n",iter->first.c_str(),iter->second);     
   }	
   sockmap.clear();
+}
+
+/**
+* @brief Check can device connection status
+* @details
+* @param device channel name
+* @return  true if successful, false otherwise
+* @warning
+* @exception
+*/
+bool CanSend::isConnected(char* device){
+    
+  auto item = sockmap.find(device);
+  if (item == sockmap.end()) {
+    printf("device does not exist! ( %s )\r\n", device) ;
+    return false;
+  }     
+  
+  int s = item->second;
+ 
+  struct ifreq ifr;   
+  memset(&ifr.ifr_name, 0, sizeof(ifr.ifr_name));
+  strcpy(ifr.ifr_name,device);
+  ifr.ifr_ifindex = if_nametoindex(ifr.ifr_name);
+  if (!ifr.ifr_ifindex) {
+     perror("if_nametoindex");
+     return false;
+  }
+
+  if (ioctl(s, SIOCGIFINDEX, &ifr) < 0) {
+    perror("SIOCGIFINDEX");
+    return false;
+  }
+
+  if (ioctl(s, SIOCGIFMTU, &ifr) < 0){
+    perror("SIOCGIFMTU");
+    return false;
+  }
+
+  return true;
+}
+
+/**
+* @brief Check can device connection status
+* @details Check the sockets of all channels stored in the this object
+* @param device channel name
+* @return  true if all were successful, false otherwise
+* @warning
+* @exception
+*/
+bool CanSend::isConnect(){
+    
+    for (auto iter = sockmap.begin(); iter !=  sockmap.end(); iter++){
+      if ( isConnected((char*)iter->first.c_str()) == false ){
+        return false;
+      }
+    }
+    return true;
 }
