@@ -1,5 +1,5 @@
-#ifndef CANADAPTOR_H
-#define CANADAPTOR_H
+#ifndef CAN_ADAPTOR_H
+#define CAN_ADAPTOR_H
 
 #include <functional>
 #include <iostream>
@@ -8,8 +8,9 @@
 #include <map>
 #include <cstring>
 #include <vector>
-#include <net/if.h>
+#include<unordered_map>
 
+#include <net/if.h>
 #include <linux/can.h>
 #include <linux/can/raw.h>
 
@@ -20,7 +21,7 @@
 #define byte unsigned char
 //#define ONLY_SFF "C00007FF"
 #define ONLY_SFF "7FF"
-#define CAN_ALIVE_CHECKTIME 2 // second
+
 #define CAN_NO_FAULT 0x00 
 #define CAN_DEVICE_FAULT 0x01 
 
@@ -43,12 +44,11 @@ class CanAdaptor {
     CanAdaptor(){
        instance = NULL;
     } 
-    virtual ~CanAdaptor(){this->release();};
+    virtual ~CanAdaptor(){this->Release();};
 
   private:  
   
-    map<int, std::shared_ptr<CanCallbackFunc>> funcsmap;
-        
+    map<int, std::shared_ptr<CanCallbackFunc>> funcsmap_;
     static CanAdaptor* instance;
 
     typedef std::function<void(VCU_EPS_Control_Request)> func_VCU_EPS_Control_Request;
@@ -65,46 +65,45 @@ class CanAdaptor {
     func_VCU_DBS_Request handler_vdr;
     func_MCU_Torque_Feedback handler_mtf;
 
-    bool isBigEndian = 0;
+    bool isBigEndian_ = 0;
 
-    std::shared_ptr<CanDump> ptr_can_dump = NULL;
-    std::shared_ptr<CanSend> ptr_can_send = NULL;
+    std::shared_ptr<CanDump> ptr_can_dump_ = NULL;
+    std::shared_ptr<CanSend> ptr_can_send_ = NULL;
     
-//    map<string, int> sockmap;  //< device-socket    
-    //int s; /* can raw socket */     
-    //string send_devive; //< 전송용 채널
+    typedef std::map<unsigned int, pthread_t> ThreadMap;
+    ThreadMap psotmsg_tm_;
 
   private:
     //int socketopen(char* device );
     //void socketclose();
-    int  send(vector<byte>  body, unsigned int msgid, string device ); //< can network 연동, cansend.c 참조
-    void receive(byte* data,int canid);
-    int  canopen(int arc,vector<string> argv,CanAdaptor*,void(CanAdaptor::*func)(unsigned char* data,int canid));
+    int  Send(vector<byte>  body, unsigned int msgid, string device ); //< can network 연동, cansend.c 참조
+    void Receive(byte* data,int canid);
+    int  CanOpen(int arc,vector<string> argv,CanAdaptor*,void(CanAdaptor::*func)(unsigned char* data,int canid));
        
-    void print_map_state(string name);
+    void PrintMapState(string name);
 
-    byte* makeframebody(byte* body,iECU_Control_Hardware data); //< strunct를 byte형 body로 변환
+    byte* MakeFramebody(byte* body,iECU_Control_Hardware data); //< strunct를 byte형 body로 변환
     // can network 데이터 전송 함수  - 전송 데이터 타입 별로 생성......
 
-    void postMessageByType(iECU_Control_Hardware body,int msgid,string device);
-    void postMessageByType(iECU_Control_Accelerate body,int msgid,string device);
-    void postMessageByType(iECU_Control_Brake body,int msgid,string device);
-    void postMessageByType(iECU_Control_Steering body,int msgid,string device);
-    void postMessageByType(Mode_Control_Flag body,int msgid,string device);
-    void postMessageByType(byte* body, unsigned int canid, string device );
-    void postMessageByType(byte* data, unsigned int canid, string device,int duration );
+    void PostMessageByType(iECU_Control_Hardware body,int msgid,string device);
+    void PostMessageByType(iECU_Control_Accelerate body,int msgid,string device);
+    void PostMessageByType(iECU_Control_Brake body,int msgid,string device);
+    void PostMessageByType(iECU_Control_Steering body,int msgid,string device);
+    void PostMessageByType(Mode_Control_Flag body,int msgid,string device);
+    void PostMessageByType(byte* body, unsigned int canid, string device );
+    void PostMessageByType(byte* data, unsigned int canid, string device,int duration );
     
-    int s_open(vector<string> device); 
-    int r_open(vector<string> device); 
+    int SOpen(vector<string> device); 
+    int ROpen(vector<string> device); 
     
-
   public:   
-    int  initialize(bool endian); //< 초기화
-    void release(); //< 종료
-    int  open(vector<string> device); //< open can channel, warning : callback function을 전부 등록후 호출한다.
-    int  runControlFlag(int flag, string device);
-    bool isConnected(string device);           
-    void checkSocketStatus(vector<string> device,std::function<void(int,int)> func);
+    int  Initialize(bool endian); //< 초기화
+    void Release(); //< 종료
+    int  Open(vector<string> device); //< open can channel, warning : callback function을 전부 등록후 호출한다.
+    int  RunControlFlag(int flag, string device);
+    bool IsConnected(string device);           
+    void CheckSocketStatus(vector<string> device,std::function<void(int,int)> func);
+    void StopPostMessage(unsigned int canid);
    /**
     * @brief Returns a singleton object.
     * @details 
@@ -132,7 +131,7 @@ class CanAdaptor {
     * @exception
     */
     template<typename T>
-    void setHandler(T *pClassType,void(T::*pfunc)(VCU_EPS_Control_Request),int canid,string device){
+    void SetHandler(T *pClassType,void(T::*pfunc)(VCU_EPS_Control_Request),int canid,string device){
       //void CanAdaptor::setHandler(T *pClassType,void(T::*pfunc)(VCU_EPS_Control_Request,std::string msgid,CHANNEL_TYPE type)){  
       //setHandler(bind(pfunc, pClassType, placeholders::_1));    
       handler_vcr = move(bind(pfunc, pClassType, placeholders::_1));
@@ -151,7 +150,7 @@ class CanAdaptor {
                 }
                 );                
      cout << "setHandler(VCU_EPS_Control_Request) : " + device << ", canid : "<< canid << endl;          
-     funcsmap.insert(make_pair(canid,object));     
+     funcsmap_.insert(make_pair(canid,object));     
 //     print_map_state("VCU_EPS_Control_Request");
    };
 
@@ -166,7 +165,7 @@ class CanAdaptor {
     * @exception
     */
     template<typename T>
-    void setHandler(T *pClassType,void(T::*pfunc)(Remote_Control_IO),int canid,string device){        
+    void SetHandler(T *pClassType,void(T::*pfunc)(Remote_Control_IO),int canid,string device){        
       handler_rci = move(bind(pfunc, pClassType, placeholders::_1));
       //int canid = string2hex(msgid);
       
@@ -185,7 +184,7 @@ class CanAdaptor {
                 );
       
        cout << "setHandler(Remote_Control_IO) : " + device << ", canid : "<< canid << endl;          
-       funcsmap.insert(make_pair(canid,object));           
+       funcsmap_.insert(make_pair(canid,object));           
   //    print_map_state("Remote_Control_IO");
    };
 
@@ -200,7 +199,7 @@ class CanAdaptor {
     * @exception
     */
     template<typename T>
-    void setHandler(T *pClassType,void(T::*pfunc)(Remote_Control_Shake),int canid,string device){        
+    void SetHandler(T *pClassType,void(T::*pfunc)(Remote_Control_Shake),int canid,string device){        
       handler_rcs = move(bind(pfunc, pClassType, placeholders::_1));
       //int canid = string2hex(msgid);
       
@@ -218,8 +217,8 @@ class CanAdaptor {
                 }
                 );
       
-       cout << "setHandler(Remote_Control_Shake_2) : " + device << ", canid : "<< canid << endl;          
-       funcsmap.insert(make_pair(canid,object));           
+      cout << "setHandler(Remote_Control_Shake_2) : " + device << ", canid : "<< canid << endl;          
+      funcsmap_.insert(make_pair(canid,object));           
 //      print_map_state("Remote_Control_Shake_2");
    };
 
@@ -234,7 +233,7 @@ class CanAdaptor {
     * @exception
     */
     template<typename T>
-    void setHandler(T *pClassType,void(T::*pfunc)(DBS_Status),int canid,string device){        
+    void SetHandler(T *pClassType,void(T::*pfunc)(DBS_Status),int canid,string device){        
       handler_ds = move(bind(pfunc, pClassType, placeholders::_1));
       //int canid = string2hex(msgid);
       
@@ -253,7 +252,7 @@ class CanAdaptor {
                 );
       
        cout << "setHandler(DBS_Status) : " + device << ", canid : "<< canid << endl;          
-       funcsmap.insert(make_pair(canid,object));           
+       funcsmap_.insert(make_pair(canid,object));           
 //    print_map_state("DBS_Status");
    };
 
@@ -268,7 +267,7 @@ class CanAdaptor {
     * @exception
     */
     template<typename T>
-    void setHandler(T *pClassType,void(T::*pfunc)(VCU_DBS_Request),int canid,string device){        
+    void SetHandler(T *pClassType,void(T::*pfunc)(VCU_DBS_Request),int canid,string device){        
       handler_vdr = move(bind(pfunc, pClassType, placeholders::_1));
       //int canid = string2hex(msgid);
       
@@ -286,8 +285,8 @@ class CanAdaptor {
                 }
                 );
       
-       cout << "setHandler(VCU_DBS_Request) : " + device << ", canid : "<< canid << endl;          
-       funcsmap.insert(make_pair(canid,object));           
+      cout << "setHandler(VCU_DBS_Request) : " + device << ", canid : "<< canid << endl;          
+      funcsmap_.insert(make_pair(canid,object));           
 //      print_map_state("VCU_DBS_Request");
    };
    
@@ -303,7 +302,7 @@ class CanAdaptor {
     * @exception
     */
     template<typename T>
-    void setHandler(T *pClassType,void(T::*pfunc)(MCU_Torque_Feedback),int canid,string device){        
+    void SetHandler(T *pClassType,void(T::*pfunc)(MCU_Torque_Feedback),int canid,string device){        
       handler_mtf = move(bind(pfunc, pClassType, placeholders::_1));
      // int canid = string2hex(msgid);
       
@@ -322,7 +321,7 @@ class CanAdaptor {
                 );
       
        cout << "setHandler(MCU_Torque_Feedback) : " + device << ", canid : "<< canid << endl;          
-       funcsmap.insert(make_pair(canid,object));           
+       funcsmap_.insert(make_pair(canid,object));           
 //      print_map_state("MCU_Torque_Feedback");
    };
 
@@ -338,7 +337,7 @@ class CanAdaptor {
     * @exception
     */
     template<typename T>
-    void postCanMessage(T structTypeData,int msgid,string device){ 
+    void PostCanMessage(T structTypeData,int msgid,string device){ 
       //cout <<  "post msg "<< endl;
       string msg("[send]<");
       msg.append(std::to_string(msgid)).append("> ").append(typeid(structTypeData).name()).append(" : ").append(device);
@@ -347,13 +346,13 @@ class CanAdaptor {
       //1) 타입별로 별고 처리가 필요하지 않은 경우 아래 사용
       byte body[CAN_MAX_DLEN];	         
 	    memcpy(body,(void*)&structTypeData,CAN_MAX_DLEN);                
-      postMessageByType(body,msgid,device);      
+      PostMessageByType(body,msgid,device);      
       //2) 중간에 타입별로 처리가 필요한 경우 아래 사용
-      //postMessageByType(structType,msgid,device);      
+      //PostMessageByType(structType,msgid,device);      
    };
 
-    template<typename T>
-    void postCanMessage(T structTypeData,int msgid,string device,int duration){ 
+   template<typename T>
+   void PostCanMessage(T structTypeData,int msgid,string device,int duration){ 
       //cout <<  "post msg "<< endl;
       string msg("[send]<");
       msg.append(std::to_string(msgid)).append("> ").append(typeid(structTypeData).name());
@@ -361,11 +360,11 @@ class CanAdaptor {
       //byte* body = makeframebody(temp,data);
       //1) 타입별로 별고 처리가 필요하지 않은 경우 아래 사용
       byte body[CAN_MAX_DLEN];	         
-	    memcpy(body,(void*)&structTypeData,CAN_MAX_DLEN);                
-      postMessageByType(body,msgid,device,duration);      
+      memcpy(body,(void*)&structTypeData,CAN_MAX_DLEN);                
+      PostMessageByType(body,msgid,device,duration);      
 
       //2) 중간에 타입별로 처리가 필요한 경우 아래 사용
-      //postMessageByType(structType,msgid,device);      
+      //PostMessageByType(structType,msgid,device);      
    };
     
   private:

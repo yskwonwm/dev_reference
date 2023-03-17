@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <iostream>
-#include <thread>
 
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -25,7 +24,7 @@ using namespace std;
 * @warning 
 * @exception
 */
-int CanSend::send(std::vector<unsigned char> data, unsigned int msgid, char* device ){
+int CanSend::Send(std::vector<unsigned char> data, unsigned int msgid, char* device ){
     
     struct ifreq ifr;
     //byte* body = makeframebody(temp,data);
@@ -80,10 +79,10 @@ int CanSend::send(std::vector<unsigned char> data, unsigned int msgid, char* dev
 * @warning
 * @exception
 */
-int CanSend::socketopen(std::vector<std::string> device){
+int CanSend::SocketOpen(std::vector<std::string> device){
 
   for (vector<string>::iterator iter = device.begin(); iter != device.end(); ++iter){
-    if ( socketopen((char*)iter->c_str()) != 0 ){
+    if ( SocketOpen((char*)iter->c_str()) != 0 ){
 		  perror("can device open fail");        
 		  return -1;
     }   
@@ -99,7 +98,7 @@ int CanSend::socketopen(std::vector<std::string> device){
 * @warning
 * @exception
 */
-int CanSend::socketopen(char* device )
+int CanSend::SocketOpen(char* device )
 {    
     int ret;
     int s; /* can raw socket */ 
@@ -167,7 +166,7 @@ int CanSend::socketopen(char* device )
 * @warning
 * @exception
 */
-void CanSend::socketclose(){
+void CanSend::SocketClose(){
 
   for (auto iter = sockmap.begin(); iter !=  sockmap.end(); iter++){
      close(iter->second);
@@ -185,7 +184,7 @@ void CanSend::socketclose(){
 * @warning
 * @exception
 */
-bool CanSend::isConnected(char* device){
+bool CanSend::IsConnected(char* device){
     
   auto item = sockmap.find(device);
   if (item == sockmap.end()) {
@@ -225,12 +224,12 @@ bool CanSend::isConnected(char* device){
 * @warning
 * @exception
 */
-bool CanSend::isConnect(){
+bool CanSend::IsConnect(){
     
-    for (auto iter = sockmap.begin(); iter !=  sockmap.end(); iter++){
-      if ( isConnected((char*)iter->first.c_str()) == false ){
-        return false;
-      }
+  for (auto iter = sockmap.begin(); iter !=  sockmap.end(); iter++){
+    if ( IsConnected((char*)iter->first.c_str()) == false ){
+      return false;
     }
-    return true;
+  }
+  return true;
 }

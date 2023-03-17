@@ -1,17 +1,14 @@
-#ifndef FUNCTIONCALLBACK_PARENT_H
-#define FUNCTIONCALLBACK_PARENT_H
+#ifndef DATA_RELAYER_H
+#define DATA_RELAYER_H
 
 #include <iostream>
 #include <functional>
-#include <memory.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <map>
-#include <typeinfo>
-#include <unistd.h>
+#include <memory.h>
+#include <arpa/inet.h>
 
 #include "include/w1candbc.h"
-#include "include/can_define.hpp"
+
 
 using namespace std;
 
@@ -36,20 +33,20 @@ class DataRelayer {
     func_rpm_callback rpmCallback; // Callback function pointer variable definition
     //func_other_callback otherCallback; // Callback function pointer variable definition
 
-    bool system_endian = 0;
-    CanAdaptor* canlib = NULL;
+    bool system_endian_ = 0;
+    CanAdaptor* canlib_ = NULL;
 
-    map<int,int> magMap; // code , MSG_ID
-    map<int,string> channelMap; // code , channel
+    map<int,int> magMap_; // code , MSG_ID
+    map<int,string> channelMap_; // code , channel
 
   public:
-
     DataRelayer(); 
     virtual ~DataRelayer();
 
-    void control_steering(float angle);
-    void control_vel(float vel);
-    void control_hardware(bool horn, bool head_light, bool right_light, bool left_light);
+    void ControlSteering(float angle);
+    void ControlVel(float vel);
+    void ControlHardware(bool horn, bool head_light, bool right_light, bool left_light);
+    void StopPostMessage(unsigned int id);
 
     void RegistRpmCallback(void(*pfunc)(int,int,int));
     void RegistFaultCallback(void(*pfunc)(int,int));
@@ -59,20 +56,23 @@ class DataRelayer {
     template<typename T> 
     void RegistFaultCallback(T *pClassType,void(T::*pfunc)(int,int));
 
-  private:
-    void setmsgMap(int svcid,int msgid,string device);
+    void Run();
+    void SendTest();
 
-    void sendMessageControlSteering(float steering_angle_cmd);
-    void sendMessageControlAccelerate(float vel);
-    void sendMessageControlHardware(bool Horn,bool HeadLight,bool Right_Turn_Light, bool Left_Turn_Light);
+  private:
+    void SetmsgMap(int svcid,int msgid,string device);
+
+    void SendMessageControlSteering(float steering_angle_cmd);
+    void SendMessageControlAccelerate(float vel);
+    void SendMessageControlHardware(bool Horn,bool HeadLight,bool Right_Turn_Light, bool Left_Turn_Light);
   
-    void handler_VCU_EPS_Control_Request (VCU_EPS_Control_Request msg);
-    void handler_Remote_Control_Shake (Remote_Control_Shake msg);
-    void handler_Remote_Control_IO (Remote_Control_IO msg);
-    void handler_DBS_Status (DBS_Status msg);
-    void handler_VCU_DBS_Request (VCU_DBS_Request msg);
-    void handler_MCU_Torque_Feedback (MCU_Torque_Feedback msg);
-    unsigned short convert_speed_units(float vel);
+    void Handler_VCU_EPS_Control_Request (VCU_EPS_Control_Request msg);
+    void Handler_Remote_Control_Shake (Remote_Control_Shake msg);
+    void Handler_Remote_Control_IO (Remote_Control_IO msg);
+    void Handler_DBS_Status (DBS_Status msg);
+    void Handler_VCU_DBS_Request (VCU_DBS_Request msg);
+    void Handler_MCU_Torque_Feedback (MCU_Torque_Feedback msg);
+    unsigned short ConvertSpeedUnits(float vel);
 
     bool is_big_endian(){
       char buf[2] = {0,1};
@@ -80,9 +80,6 @@ class DataRelayer {
       return *val == 1;
     }
 
-public:
-    void run();
-    void sendtest();
  };
 
 #endif //FUNCTIONCALLBACK_PARENT_H

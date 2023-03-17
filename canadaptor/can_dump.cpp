@@ -24,6 +24,7 @@
 #include "lib.h"
 #include "can_dump.hpp"
 #include "can_adaptor.hpp"
+#include "include/can_define.hpp"
 
 using namespace std;
 //extern int optind, opterr, optopt;
@@ -47,53 +48,34 @@ static volatile int running = 1;
 * @warning 
 * @exception
 */         
-int CanDump::open(int argc, std::vector<std::string> argval,CanAdaptor* pClassType,void(CanAdaptor::*func)(unsigned char* data,int canid))
+int CanDump::Open(int argc, std::vector<std::string> argval,CanAdaptor* pClassType,void(CanAdaptor::*func)(unsigned char* data,int canid))
 {	
-     string argv[MAXCN];
-	 int idx = 0;
+  string argv[MAXCN];
+  int idx = 0;
 
-	 if ( MAXCN < argc ){    
-       fprintf(stdout, "More than %d CAN devices given on commandline! (%d)\n", MAXCN, argc);   
-	   return -1;
-	 }
-
-	 for ( string arg : argval ){
-		argv[idx++] = arg;
-
-		//fprintf(stdout, "call open !!! , %s\n", arg);
-	 };
-
-	// fprintf(stdout, "call open !!! , %s\n", (char*)argv[0].c_str());
-	// fprintf(stdout, "call open !!! , %s\n", (char*)argv[1].c_str());
+  unsigned char down_causes_exit = 1;	
+  unsigned char view = 0;
 	
-	struct epoll_event events_pending[MAXSOCK];
-	struct epoll_event event_setup = {
-		.events = EPOLLIN, /* prepare the common part */
-	};
-		
-	unsigned char down_causes_exit = 1;	
-	unsigned char view = 0;
-	
-	int rcvbuf_size = 0;
-	int num_events;
-	int numfilter;	
-	char *ptr, *nptr;
-	struct sockaddr_can addr;
-	char ctrlmsg[CMSG_SPACE(sizeof(struct timeval)) +
-		     CMSG_SPACE(3 * sizeof(struct timespec)) +
-		     CMSG_SPACE(sizeof(__u32))];
-	struct iovec iov;
-	struct msghdr msg;
-	struct cmsghdr *cmsg;
-	struct can_filter *rfilter;
-	can_err_mask_t err_mask;
-	struct canfd_frame frame;
-	int nbytes, sockCnt, maxdlen;
-	struct ifreq ifr;
-	struct timeval tv;
-	int timeout_ms = -1; /* default to no timeout */
+  int rcvbuf_size = 0;
+  int num_events;
+  int numfilter;	
+  char *ptr, *nptr;
+  struct sockaddr_can addr;
+  char ctrlmsg[CMSG_SPACE(sizeof(struct timeval)) +
+               CMSG_SPACE(3 * sizeof(struct timespec)) +
+		       CMSG_SPACE(sizeof(__u32))];
+  struct iovec iov;
+  struct msghdr msg;
+  struct cmsghdr *cmsg;
+  struct can_filter *rfilter;
+  can_err_mask_t err_mask;
+  struct canfd_frame frame;
+  int nbytes, sockCnt, maxdlen;
+  struct ifreq ifr;
+  struct timeval tv;
+  int timeout_ms = -1; /* default to no timeout */
 
-    bool retry = true; 
+  bool retry = true; 
 	// signal(SIGTERM, sigterm);
 	// signal(SIGHUP, sigterm);
 	// signal(SIGINT, sigterm);
@@ -101,23 +83,42 @@ int CanDump::open(int argc, std::vector<std::string> argval,CanAdaptor* pClassTy
 	//last_tv.tv_sec = 0;
 	//last_tv.tv_usec = 0;
 	//progname = basename(argv[0]);
-	currmax = argc; /* find real number of CAN devices */
+  currmax = argc; /* find real number of CAN devices */
 
-	if (currmax > MAXSOCK) {
+  if ( MAXCN < argc ){    
+    fprintf(stdout, "More than %d CAN devices given on commandline! (%d)\n", MAXCN, argc);   
+      return -1;
+  }
+
+  for ( string arg : argval ){
+    argv[idx++] = arg;
+	//fprintf(stdout, "call open !!! , %s\n", arg);
+  };
+
+	// fprintf(stdout, "call open !!! , %s\n", (char*)argv[0].c_str());
+	// fprintf(stdout, "call open !!! , %s\n", (char*)argv[1].c_str());	
+  struct epoll_event events_pending[MAXSOCK];
+  struct epoll_event event_setup = {
+		.events = EPOLLIN, /* prepare the common part */
+  };
+		
+
+  if (currmax > MAXSOCK) {
 		fprintf(stderr, "More than %d CAN devices given on commandline!\n", MAXSOCK);
 		return 1;
-	}
+  }
 
-while(retry)	{
+  while(retry){
 
-try{
-	fd_epoll = epoll_create(1);
-	if (fd_epoll < 0) {
+    try{
+      
+	  fd_epoll = epoll_create(1);
+	  if (fd_epoll < 0) {
 		perror("epoll_create");
 		return 1;
-	}
+	  }
 
-	for (sockCnt = 0; sockCnt < currmax; sockCnt++) {
+	  for (sockCnt = 0; sockCnt < currmax; sockCnt++) {
 		struct if_info* obj = &sock_info[sockCnt];
 		fprintf(stdout, "5)call open !!!  %s\n", (char*)argv[sockCnt].c_str());
 		ptr = (char*)argv[sockCnt].c_str();
@@ -251,31 +252,30 @@ try{
 					fprintf(stderr, "The socket receive buffer size was "
 						"adjusted due to /proc/sys/net/core/rmem_max.\n");
 			}
-		}
+		  }
 
-		if (bind(obj->s, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+		  if (bind(obj->s, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 			perror("bind");
 			return 1;
-		}		
-	}
+		  }		
+	  }
 
-	/* these settings are static and can be held out of the hot path */
-	iov.iov_base = &frame;
-	msg.msg_name = &addr;
-	msg.msg_iov = &iov;
-	msg.msg_iovlen = 1;
-	msg.msg_control = &ctrlmsg;
-
+      /* these settings are static and can be held out of the hot path */
+      iov.iov_base = &frame;
+      msg.msg_name = &addr;
+      msg.msg_iov = &iov;
+      msg.msg_iovlen = 1;
+      msg.msg_control = &ctrlmsg;
     
-	while (running) {
+      while (running) {
 
-		num_events = epoll_wait(fd_epoll, events_pending, currmax, timeout_ms);
+        num_events = epoll_wait(fd_epoll, events_pending, currmax, timeout_ms);
 
-		if (num_events == -1) {
-			if (errno != EINTR)
-				running = 0;
-			continue;
-		}
+        if (num_events == -1) {
+          if (errno != EINTR)
+            running = 0;
+            continue;
+        }
 
 		/* handle timeout */
 		if (!num_events && timeout_ms >= 0) {
@@ -337,29 +337,27 @@ try{
 
 			handler(frame.data,frame.can_id);
 		}
-	}
+	  }
 	}catch(int e){
-		//fprintf(stdout, "throw catch %d\n",e);
 
 		if (e == DEVICE_EXCEPTION){
-			socketclose();
-			//fprintf(stdout, "exception %d\n",e);
-			sleep(RETRY_TIME);
+			SocketClose();
+			sleep(CAN_RECV_RETRY_TIME);
 			retry = true;
 			continue;
 		}
 	}
-} 
+  } 
 
-    fprintf(stdout, "end while in can_dump\n");
+  fprintf(stdout, "end while in can_dump\n");
 
-    socketclose();
+  SocketClose();
 
-    fprintf(stdout, "can receive end\n");
-	return 0;
+  fprintf(stdout, "can receive end\n");
+  return 0;
 }
 
-void CanDump::socketclose(){
+void CanDump::SocketClose(){
 
 	for (int i = 0; i < currmax; i++){
 		close(sock_info[i].s);

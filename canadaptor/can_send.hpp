@@ -1,5 +1,5 @@
-#ifndef CANSSEND_H
-#define CANSSEND_H
+#ifndef CAN_SEND_H
+#define CAN_SEND_H
 
 #include <map>
 #include <vector>
@@ -8,19 +8,19 @@
 class CanSend {
 
   private :
-   // CanSend(){};
-
     std::map<std::string, int> sockmap;  //< device-socket
 
-    int socketopen(char* device );
+    int SocketOpen(char* device );
 
   public:
+
+    void SocketClose();
+    int Send(std::vector<unsigned char> body, unsigned int msgid, char* device ); //< can network 연동, cansend.c 참조
+    int SocketOpen(std::vector<std::string> device);
     
-    void socketclose();
-    int send(std::vector<unsigned char> body, unsigned int msgid, char* device ); //< can network 연동, cansend.c 참조
-    int socketopen(std::vector<std::string> device);
-    bool isConnected(char* device);
-    bool isConnect();
+    bool IsConnected(char* device);
+    bool IsConnect();    
+
 };
 
 #endif

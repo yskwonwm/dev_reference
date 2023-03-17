@@ -59,19 +59,18 @@ int main(int argc, char **argv){
   // register receive callback function
   obj.RegistFaultCallback(faultCallback);
   obj.RegistRpmCallback(rpmCallback);
-  obj.run();
+  obj.Run();
 
-	//sleep(1);
-   // obj.sendtest();
+	// sleep(1);
   // send control command 
-  // obj.control_hardware(false, true, true, false); //bool horn, bool head_light, bool right_light, bool left_light
-  // obj.control_steering(20); // float angle
-  // obj.control_vel(4); // float vel
+  obj.ControlHardware(false, true, true, false); //bool horn, bool head_light, bool right_light, bool left_light
+  obj.ControlSteering(20); // float angle
+  obj.ControlVel(4); // float vel
 
   while(state){
-
-    //obj.sendtest();
+    //obj.SendTest();
     sleep(5);
+    //obj.StopPostMessage(1286);
   }
 
   cout << "***can test end!!!***" << endl;

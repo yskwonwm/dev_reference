@@ -4,9 +4,10 @@
 
 #define  CNV_SPEED_FACTOR 3.6
 #define  RESOLUTION_SPEED_CTRL 10
-#define  RESOLUTION_STEERING_CTRL 10
+#define  RESOLUTION_STEERING_CTRL 10.0
 
 #define  OFFSET_STEERING 30
+#define  OFFSET_STRANGLE 3000
 #define  MAX_STEERING 30
 #define  MIN_STEERING -30
 
@@ -40,6 +41,9 @@ enum ACC_GEAR {
 
 enum CHANNEL_TYPE { CAN0,CAN1 } ;
 static const char *device_type[] =
-        { "can0", "can0"};
+        { "vcan0", "vcan0"};
+
+#define CAN_ALIVE_CHECKTIME 2 // second
+#define CAN_RECV_RETRY_TIME 2 // second
 
 #endif

@@ -1,17 +1,20 @@
+#include <vector>
+#include <unistd.h>
 
 #include "can_adaptor.hpp"
 #include "data_relayer.hpp"
 
+#include "include/can_define.hpp"
 
 DataRelayer::DataRelayer() {
-      system_endian = is_big_endian();
-    }
+  system_endian_ = is_big_endian();
+}
 
 DataRelayer::~DataRelayer() {
-      if( canlib != NULL ){
-        canlib->release();
-      }
-    }
+  if( canlib_ != NULL ){
+    canlib_->Release();
+  }
+}
 
 /**
 * @brief Send control commands.(ControlSteering)
@@ -20,8 +23,8 @@ DataRelayer::~DataRelayer() {
 * @return void
 * @exception
 */
-void DataRelayer::control_steering(float angle){
-    sendMessageControlSteering(angle);
+void DataRelayer::ControlSteering(float angle){
+  SendMessageControlSteering(angle);
 }
 
 /**
@@ -31,8 +34,8 @@ void DataRelayer::control_steering(float angle){
 * @return void
 * @exception
 */
-void DataRelayer::control_vel(float vel){//iECU_Control_Accelerate, iECU_Control_Brake둘다 사용)
-    sendMessageControlAccelerate(vel);
+void DataRelayer::ControlVel(float vel){//iECU_Control_Accelerate, iECU_Control_Brake둘다 사용)
+  SendMessageControlAccelerate(vel);
 }
 
 /**
@@ -45,8 +48,8 @@ void DataRelayer::control_vel(float vel){//iECU_Control_Accelerate, iECU_Control
 * @return void
 * @exception
 */
-void DataRelayer::control_hardware(bool horn, bool head_light, bool right_light, bool left_light){
-    sendMessageControlHardware( horn,  head_light,  right_light,  left_light);
+void DataRelayer::ControlHardware(bool horn, bool head_light, bool right_light, bool left_light){
+  SendMessageControlHardware( horn,  head_light,  right_light,  left_light);
 }
 
 
@@ -58,7 +61,7 @@ void DataRelayer::control_hardware(bool horn, bool head_light, bool right_light,
 * @exception
 */
 void DataRelayer::RegistRpmCallback(void(*pfunc)(int,int,int)){
-    rpmCallback = static_cast<void(*)(int,int,int)>(pfunc);
+  rpmCallback = static_cast<void(*)(int,int,int)>(pfunc);
 };
 
 /**
@@ -69,7 +72,7 @@ void DataRelayer::RegistRpmCallback(void(*pfunc)(int,int,int)){
 * @exception
 */
 void DataRelayer::RegistFaultCallback(void(*pfunc)(int,int)){
-    faultCallback = static_cast<void(*)(int,int)>(pfunc);
+  faultCallback = static_cast<void(*)(int,int)>(pfunc);
 };
 
 /**
@@ -81,7 +84,7 @@ void DataRelayer::RegistFaultCallback(void(*pfunc)(int,int)){
 */
 template<typename T>
 void DataRelayer::RegistRpmCallback(T *pClassType,void(T::*pfunc)(int,int,int)){
-    rpmCallback = move(bind(pfunc, pClassType
+  rpmCallback = move(bind(pfunc, pClassType
     , placeholders::_1
     , placeholders::_2
     , placeholders::_3
@@ -97,7 +100,7 @@ void DataRelayer::RegistRpmCallback(T *pClassType,void(T::*pfunc)(int,int,int)){
 */
 template<typename T>
 void DataRelayer::RegistFaultCallback(T *pClassType,void(T::*pfunc)(int,int)){
-    faultCallback = move(bind(pfunc, pClassType
+  faultCallback = move(bind(pfunc, pClassType
     , placeholders::_1
     , placeholders::_2
     ));
@@ -110,9 +113,9 @@ void DataRelayer::RegistFaultCallback(T *pClassType,void(T::*pfunc)(int,int)){
 * @return void
 * @exception
 */
-void DataRelayer::setmsgMap(int svcid,int msgid,string device){
-    magMap.insert(make_pair(svcid,msgid));
-    channelMap.insert(make_pair(svcid,device));
+void DataRelayer::SetmsgMap(int svcid,int msgid,string device){
+  magMap_.insert(make_pair(svcid,msgid));
+  channelMap_.insert(make_pair(svcid,device));
 }
 
 /**
@@ -122,19 +125,19 @@ void DataRelayer::setmsgMap(int svcid,int msgid,string device){
 * @return void
 * @exception
 */
-void DataRelayer::sendMessageControlSteering(float steering_angle_cmd){
+void DataRelayer::SendMessageControlSteering(float steering_angle_cmd){
 
-    if ( steering_angle_cmd > MAX_STEERING || steering_angle_cmd < MIN_STEERING ){
-      return;
-    }
+  if ( steering_angle_cmd > MAX_STEERING || steering_angle_cmd < MIN_STEERING ){
+    return;
+  }
 
-    iECU_Control_Steering dat_1;
-    memset(&dat_1,0x00,CAN_MAX_DLEN);
+  iECU_Control_Steering dat_1;
+  memset(&dat_1,0x00,CAN_MAX_DLEN);
 
-    dat_1.iecu_steering_angle_cmd = (steering_angle_cmd + OFFSET_STEERING) * RESOLUTION_STEERING_CTRL;
-    dat_1.iecu_steering_valid = 1;
+  dat_1.iecu_steering_angle_cmd = (steering_angle_cmd + OFFSET_STEERING) * RESOLUTION_STEERING_CTRL;
+  dat_1.iecu_steering_valid = 1;
 
-    canlib->postCanMessage<iECU_Control_Steering>(dat_1,IECU_CONTROL_STEERING,device_type[CAN1]);
+  canlib_->PostCanMessage<iECU_Control_Steering>(dat_1,IECU_CONTROL_STEERING,device_type[CAN1]);
 };
 
 /**
@@ -144,31 +147,31 @@ void DataRelayer::sendMessageControlSteering(float steering_angle_cmd){
 * @return void
 * @exception
 */
-void DataRelayer::sendMessageControlAccelerate(float vel){
+void DataRelayer::SendMessageControlAccelerate(float vel){
 
-    unsigned char gear;
-    if ( vel > 0 ) {
-      gear = FORWARD;
-    } else if ( vel < 0 ) {
-      gear = REVERSE;
-    } else {
-      gear = NEUTRAL;
-    }
+  unsigned char gear;
+  if ( vel > 0 ) {
+    gear = FORWARD;
+  } else if ( vel < 0 ) {
+    gear = REVERSE;
+  } else {
+    gear = NEUTRAL;
+  }
 
-    iECU_Control_Accelerate dat_1;
-    memset(&dat_1,0x00,CAN_MAX_DLEN);
-    dat_1.iecu_accelerate_gear = gear; // (vel >0) = 1, (vel = 0) = 2, (vel < 0) = 3
-    dat_1.iecu_accelerate_valid = 1;
-    dat_1.iecu_accelerate_work_mode = 1;
-    dat_1.iecu_speed_control = [](float v){return v * CNV_SPEED_FACTOR * RESOLUTION_SPEED_CTRL;}(vel) ;
-    dat_1.iecu_torque_control = 0;
-    canlib->postCanMessage<iECU_Control_Accelerate>(dat_1,IECU_CONTROL_ACCELERATE,device_type[CAN1]);
+  iECU_Control_Accelerate dat_1;
+  memset(&dat_1,0x00,CAN_MAX_DLEN);
+  dat_1.iecu_accelerate_gear = gear; // (vel >0) = 1, (vel = 0) = 2, (vel < 0) = 3
+  dat_1.iecu_accelerate_valid = 1;
+  dat_1.iecu_accelerate_work_mode = 1;
+  dat_1.iecu_speed_control = [](float v){return v * CNV_SPEED_FACTOR * RESOLUTION_SPEED_CTRL;}(vel) ;
+  dat_1.iecu_torque_control = 0;
+  canlib_->PostCanMessage<iECU_Control_Accelerate>(dat_1,IECU_CONTROL_ACCELERATE,device_type[CAN1]);
 
-    iECU_Control_Brake dat_2;
-    memset(&dat_2,0x00,CAN_MAX_DLEN);
-    dat_2.iecu_brakepressure_cmd = 100;
-    dat_2.iecu_dbs_valid = 1;
-    canlib->postCanMessage<iECU_Control_Brake>(dat_2,IECU_CONTROL_BRAKE,device_type[CAN1]);
+  iECU_Control_Brake dat_2;
+  memset(&dat_2,0x00,CAN_MAX_DLEN);
+  dat_2.iecu_brakepressure_cmd = 100;
+  dat_2.iecu_dbs_valid = 1;
+  canlib_->PostCanMessage<iECU_Control_Brake>(dat_2,IECU_CONTROL_BRAKE,device_type[CAN1]);
 };
 
 /**
@@ -181,25 +184,25 @@ void DataRelayer::sendMessageControlAccelerate(float vel){
 * @return void
 * @exception
 */
-void DataRelayer::sendMessageControlHardware(bool Horn,bool HeadLight,bool Right_Turn_Light, bool Left_Turn_Light){
-    iECU_Control_Hardware dat_1;
-    memset(&dat_1,0x00,CAN_MAX_DLEN);
-    dat_1.iecu_headlight = 1;
-    dat_1.iecu_horn_control = 1;
-    dat_1.iecu_left_turn_light = 1;
-    dat_1.iecu_right_turn_light = 1;
-    canlib->postCanMessage<iECU_Control_Hardware>(dat_1,IECU_CONTROL_HARDWARE,device_type[CAN1]);
+void DataRelayer::SendMessageControlHardware(bool Horn,bool HeadLight,bool Right_Turn_Light, bool Left_Turn_Light){
+  iECU_Control_Hardware dat_1;
+  memset(&dat_1,0x00,CAN_MAX_DLEN);
+  dat_1.iecu_headlight = HeadLight?1:0;
+  dat_1.iecu_horn_control = Horn?1:0;
+  dat_1.iecu_left_turn_light = Left_Turn_Light?1:0;
+  dat_1.iecu_right_turn_light = Right_Turn_Light?1:0;
+  canlib_->PostCanMessage<iECU_Control_Hardware>(dat_1,IECU_CONTROL_HARDWARE,device_type[CAN1]);
 };
 // 필요에 따라 추가 한다.외부 인터페이스 API 정의 필요
 
 /**
 * @brief Callback function to register with CanAdaptor::
-* @details Register a callback function using CanAdaptor::setHandler.
+* @details Register a callback function using CanAdaptor::SetHandler.
 * @param msg receive data
 * @return void
 * @exception
 */
-void DataRelayer::handler_VCU_EPS_Control_Request (VCU_EPS_Control_Request msg){
+void DataRelayer::Handler_VCU_EPS_Control_Request (VCU_EPS_Control_Request msg){
   //   unsigned char  bydata[8];
   //   memcpy(bydata,&msg,8);
   //   for(unsigned char d : bydata){
@@ -207,32 +210,34 @@ void DataRelayer::handler_VCU_EPS_Control_Request (VCU_EPS_Control_Request msg){
   //  }
   //  cout << endl;
    // Motorola  LSB
-   short vcu_eps_strangle = htons(msg.vcu_eps_strangle);
+  short vcu_eps_strangle = htons(msg.vcu_eps_strangle);
 
-   cout << "[recv] VCU_EPS_Control_Request : " << vcu_eps_strangle <<","<< (int)msg.vcu_eps_ctrlenable <<","<< (int)msg.vcu_eps_ctrlmode << endl;
+  double strangle_value = (vcu_eps_strangle / RESOLUTION_STEERING_CTRL ) - OFFSET_STRANGLE ;
+
+  cout << "[recv] VCU_EPS_Control_Request : " << vcu_eps_strangle <<"("<<strangle_value<<"),"<< (int)msg.vcu_eps_ctrlenable <<","<< (int)msg.vcu_eps_ctrlmode << endl;
 
 }
 
 /**
 * @brief Callback function to register with CanAdaptor::
-* @details Register a callback function using CanAdaptor::setHandler.
+* @details Register a callback function using CanAdaptor::SetHandler.
 * @param msg receive data
 * @return void
 * @exception
 */
-void DataRelayer::handler_Remote_Control_Shake (Remote_Control_Shake msg){
-    cout << "[recv] Remote_Control_Shake : " << (int)msg.remote_y1_longitudinal_control <<","<<(int)msg.remote_x2_lateral_control << endl;
+void DataRelayer::Handler_Remote_Control_Shake (Remote_Control_Shake msg){
+  cout << "[recv] Remote_Control_Shake : " << (int)msg.remote_y1_longitudinal_control <<","<<(int)msg.remote_x2_lateral_control << endl;
 }
 
 /**
 * @brief Callback function to register with CanAdaptor::
-* @details Register a callback function using CanAdaptor::setHandler.
+* @details Register a callback function using CanAdaptor::SetHandler.
 * @param msg receive data
 * @return void
 * @exception
 */
-void DataRelayer::handler_Remote_Control_IO (Remote_Control_IO msg){
-    cout << "[recv] Remote_Control_IO : " << (int)msg.remote_f_horn
+void DataRelayer::Handler_Remote_Control_IO (Remote_Control_IO msg){
+  cout << "[recv] Remote_Control_IO : " << (int)msg.remote_f_horn
     << "," << (int)msg.remote_d_headlight
     << "," << (int)msg.remote_b_motor_holding_brake
     << "," << (int)msg.remote_a_mode_switch
@@ -242,44 +247,44 @@ void DataRelayer::handler_Remote_Control_IO (Remote_Control_IO msg){
 
 /**
 * @brief Callback function to register with CanAdaptor::
-* @details Register a callback function using CanAdaptor::setHandler.
+* @details Register a callback function using CanAdaptor::SetHandler.
 * @param msg receive data
 * @return void
 * @exception
 */
-void DataRelayer::handler_DBS_Status (DBS_Status msg){
-    cout << "[recv] DBS_Status : " << (int)msg.dbs_fault_code <<","<<(int)msg.dbs_hp_pressure <<","<<(int)msg.dbs_system_status << endl;
+void DataRelayer::Handler_DBS_Status (DBS_Status msg){
+  cout << "[recv] DBS_Status : " << (int)msg.dbs_fault_code <<","<<(int)msg.dbs_hp_pressure <<","<<(int)msg.dbs_system_status << endl;
 
-    faultCallback(CAN_NO_FAULT,msg.dbs_fault_code);
+  faultCallback(CAN_NO_FAULT,msg.dbs_fault_code);
 }
 
 /**
 * @brief Callback function to register with CanAdaptor::
-* @details Register a callback function using CanAdaptor::setHandler.
+* @details Register a callback function using CanAdaptor::SetHandler.
 * @param msg receive data
 * @return void
 * @exception
 */
-void DataRelayer::handler_VCU_DBS_Request (VCU_DBS_Request msg){
-    cout << "[recv] VCU_DBS_Request : " << (int)msg.vcu_dbs_pressure_request <<","<<(int)msg.vcu_dbs_request_flag << endl;
+void DataRelayer::Handler_VCU_DBS_Request (VCU_DBS_Request msg){
+  cout << "[recv] VCU_DBS_Request : " << (int)msg.vcu_dbs_pressure_request <<","<<(int)msg.vcu_dbs_request_flag << endl;
 }
 
 /**
 * @brief Callback function to register with CanAdaptor::
-* @details Register a callback function using CanAdaptor::setHandler.
+* @details Register a callback function using CanAdaptor::SetHandler.
 * @param msg receive data
 * @return void
 * @exception
 */
-void DataRelayer::handler_MCU_Torque_Feedback (MCU_Torque_Feedback msg){
-    cout << "[recv] MCU_Torque_Feedback : " << (int)msg.mcu_current
+void DataRelayer::Handler_MCU_Torque_Feedback (MCU_Torque_Feedback msg){
+  cout << "[recv] MCU_Torque_Feedback : " << (int)msg.mcu_current
     <<","<<(int)msg.mcu_errorcode
     <<","<<(int)msg.mcu_motortemp
     <<","<<(int)msg.mcu_shift
     <<","<<(int)msg.mcu_speed
     <<","<<(int)msg.mcu_torque << endl;
 
-    rpmCallback((int)msg.mcu_shift
+  rpmCallback((int)msg.mcu_shift
                     ,(int)msg.mcu_speed
                     ,(int)msg.mcu_torque);
 }
@@ -291,40 +296,45 @@ void DataRelayer::handler_MCU_Torque_Feedback (MCU_Torque_Feedback msg){
 * @return void
 * @exception
 */
-void DataRelayer::run(){
+void DataRelayer::Run(){
 
-    canlib = CanAdaptor::getInstance();
-    canlib->initialize(system_endian);
+  canlib_ = CanAdaptor::getInstance();
+  canlib_->Initialize(system_endian_);
 
-    // 수신 핸들러 등록
-    // canlib->setHandler<DataRelayer>(this,&DataRelayer::handler_VCU_EPS_Control_Request,VCU_EPS_CONTROL_REQUEST,device_type[CAN1]);
-    // canlib->setHandler<DataRelayer>(this,&DataRelayer::handler_Remote_Control_Shake,REMOTE_CONTROL_SHAKE_2,device_type[CAN1]);
-    // canlib->setHandler<DataRelayer>(this,&DataRelayer::handler_Remote_Control_IO,REMOTE_CONTROL_IO,device_type[CAN1]);
-    canlib->setHandler<DataRelayer>(this,&DataRelayer::handler_DBS_Status,DBS_STATUS,device_type[CAN1]);
-    // canlib->setHandler<DataRelayer>(this,&DataRelayer::handler_VCU_DBS_Request,VCU_DBS_REQUEST,device_type[CAN1]);
-    canlib->setHandler<DataRelayer>(this,&DataRelayer::handler_MCU_Torque_Feedback,TORQUE_FEEDBACK,device_type[CAN0]);
+  // 수신 핸들러 등록
+  canlib_->SetHandler<DataRelayer>(this,&DataRelayer::Handler_VCU_EPS_Control_Request,VCU_EPS_CONTROL_REQUEST,device_type[CAN1]);
+  // canlib_->SetHandler<DataRelayer>(this,&DataRelayer::Handler_Remote_Control_Shake,REMOTE_CONTROL_SHAKE_2,device_type[CAN1]);
+  // canlib_->SetHandler<DataRelayer>(this,&DataRelayer::Handler_Remote_Control_IO,REMOTE_CONTROL_IO,device_type[CAN1]);
+  canlib_->SetHandler<DataRelayer>(this,&DataRelayer::Handler_DBS_Status,DBS_STATUS,device_type[CAN1]);
+  // canlib_->SetHandler<DataRelayer>(this,&DataRelayer::Handler_VCU_DBS_Request,VCU_DBS_REQUEST,device_type[CAN1]);
+  canlib_->SetHandler<DataRelayer>(this,&DataRelayer::Handler_MCU_Torque_Feedback,TORQUE_FEEDBACK,device_type[CAN0]);
 
-    // 수신 리스너 오픈
-    vector<string> device;
-    //device.push_back(device_type[CAN1]);
-    device.push_back(device_type[CAN0]);
+  // 수신 리스너 오픈
+  vector<string> device;
+  //device.push_back(device_type[CAN1]);
+  device.push_back(device_type[CAN0]);
 
-    int ret = 0;
+  int ret = 0;
    
 
-    while(canlib->open(device)){
-      cout << "open fail" << endl;
-      sleep(2);      
-    }
+  while(canlib_->Open(device) != 0 ){
+    cout << "open fail" << endl;
+    sleep(CAN_ALIVE_CHECKTIME);      
+  }
     
-    while(canlib-> runControlFlag(1,device_type[CAN1])){
-      cout << "run config fail" << endl;
-      sleep(2);
-    }
-    //포트 오픈 체크 스레드
-    cout << "Start checking for can channel fault" << endl;
-    canlib->checkSocketStatus(device,faultCallback);
-    
+  while(canlib_->RunControlFlag(1,device_type[CAN1]) != 0 ){
+    cout << "run config flag fail" << endl;
+    sleep(CAN_ALIVE_CHECKTIME);
+  }
+  //포트 오픈 체크 스레드
+  cout << "Start checking for can channel fault" << endl;
+  canlib_->CheckSocketStatus(device,faultCallback);    
+}
+
+
+
+void DataRelayer::StopPostMessage(unsigned int id){
+  canlib_->StopPostMessage(id);
 }
 
 /**
@@ -334,21 +344,21 @@ void DataRelayer::run(){
 * @return void
 * @exception
 */
-void DataRelayer::sendtest(){
+void DataRelayer::SendTest(){
 
     // Mode_Control_Flag dat_5;
     // memset(&dat_5,0x00,8);
     // dat_5.mode_control_request_flag = 1;
-    // canlib->postCanMessage<Mode_Control_Flag>(dat_5,MODE_CONTROL_FLAG,device_type[CAN1]);
+    // canlib->PostCanMessage<Mode_Control_Flag>(dat_5,MODE_CONTROL_FLAG,device_type[CAN1]);
 
   // 전송 테스트
-    iECU_Control_Hardware dat_1;
-    memset(&dat_1,0x00,CAN_MAX_DLEN);
-    dat_1.iecu_headlight = 1;
-    dat_1.iecu_horn_control = 0;
-    dat_1.iecu_left_turn_light = 1;
-    dat_1.iecu_right_turn_light = 1;
-    canlib->postCanMessage<iECU_Control_Hardware>(dat_1,IECU_CONTROL_HARDWARE,device_type[CAN1]);
+  iECU_Control_Hardware dat_1;
+  memset(&dat_1,0x00,CAN_MAX_DLEN);
+  dat_1.iecu_headlight = 1;
+  dat_1.iecu_horn_control = 0;
+  dat_1.iecu_left_turn_light = 1;
+  dat_1.iecu_right_turn_light = 1;
+  canlib_->PostCanMessage<iECU_Control_Hardware>(dat_1,IECU_CONTROL_HARDWARE,device_type[CAN1]);
 
     // iECU_Control_Accelerate dat_2;
     // memset(&dat_2,0x00,8);
@@ -357,19 +367,19 @@ void DataRelayer::sendtest(){
     // dat_2.iecu_accelerate_work_mode = 1;
     // dat_2.iecu_speed_control = 1;
     // dat_2.iecu_torque_control = 1;
-    // canlib->postCanMessage<iECU_Control_Accelerate>(dat_2,IECU_CONTROL_ACCELERATE,device_type[CAN1]);
+    // canlib->PostCanMessage<iECU_Control_Accelerate>(dat_2,IECU_CONTROL_ACCELERATE,device_type[CAN1]);
 
     // iECU_Control_Brake dat_3;
     // memset(&dat_3,0x00,8);
     // dat_3.iecu_brakepressure_cmd = 1;
     // dat_3.iecu_dbs_valid = 1;
-    // canlib->postCanMessage<iECU_Control_Brake>(dat_3,IECU_CONTROL_BRAKE,device_type[CAN1]);
+    // canlib->PostCanMessage<iECU_Control_Brake>(dat_3,IECU_CONTROL_BRAKE,device_type[CAN1]);
 
     // iECU_Control_Steering dat_4;
     // memset(&dat_4,0x00,8);
     // dat_4.iecu_steering_angle_cmd = 1;
     // dat_4.iecu_steering_valid = 1;
-    // canlib->postCanMessage<iECU_Control_Steering>(dat_4,IECU_CONTROL_STEERING,device_type[CAN1]);
+    // canlib->PostCanMessage<iECU_Control_Steering>(dat_4,IECU_CONTROL_STEERING,device_type[CAN1]);
 
 
    /*

@@ -1,14 +1,9 @@
-/* for hardware timestamps - since Linux 2.6.30 */
-// #ifndef SO_TIMESTAMPING
-// #define SO_TIMESTAMPING 37
-// #endif
+#ifndef CAN_DUMP_H
+#define CAN_DUMP_H
 
-//#include <linux/can.h>
-//#include <linux/can/raw.h>
-#include <linux/net_tstamp.h>
+
 #include <iostream>
 #include <vector>
-//#include <cstring>
 
 #define TIMESTAMPSZ 50 /* string 'absolute with date' requires max 49 bytes */
 
@@ -21,7 +16,7 @@
 #define MAXANI 4
 
 #define DEVICE_EXCEPTION -1
-#define RETRY_TIME 2
+
 
 class CanAdaptor;
 
@@ -50,19 +45,22 @@ struct if_info { /* bundled information per open socket */
 */
 class CanDump {
 
-  struct if_info sock_info[MAXSOCK];
-  int fd_epoll;
-  int currmax;
+  private:	
+    struct if_info sock_info[MAXSOCK];
+    int fd_epoll;
+    int currmax;
 
-  char *progname;
-  char devname[MAXIFNAMES][IFNAMSIZ+1];
-  int dindex[MAXIFNAMES];
-  int max_devname_len; /* to prevent frazzled device name output */
+    char *progname;
+    char devname[MAXIFNAMES][IFNAMSIZ+1];
+    int dindex[MAXIFNAMES];
+    int max_devname_len; /* to prevent frazzled device name output */
   
-  //static const int canfd_on = 1;
+    //static const int canfd_on = 1;
 
   public:    
-    int open(int argc, std::vector<std::string> argval,CanAdaptor* pClassType,void(CanAdaptor::*func)(unsigned char* data,int canid));
-    int idx2dindex(int ifidx, int socket);
-    void socketclose();
+    int  Open(int argc, std::vector<std::string> argval,CanAdaptor* pClassType,void(CanAdaptor::*func)(unsigned char* data,int canid));
+    int  idx2dindex(int ifidx, int socket);
+    void SocketClose();
 };
+
+ #endif
