@@ -45,7 +45,23 @@ $ g++ -o candump candump.c lib.c
 
 ```         
 
-## Test 
+## ubuntu setting ( for real can )
+```
+1) 장비 start시에 장치 추가
+/etc/udev/rules.d 에 다음 내용 추가
+ACTION=="add|change",RUN+="/usr/local/bin/run_pcan_usb.sh”
+
+2) 장치 추가 쉘스크립트
+$vi usr/local/bin/run_pcan_usb.sh
+
+#!/bin/sh
+modprobe peak_usb
+ip link set can0 up type can bitrate 500000
+ip link set can1 up type can bitrate 500000
+
+```         
+
+## Test ( for vcan)
  ```
 # create vcan device 
 $ sudo ip link add name vcan0 type vcan    
