@@ -48,7 +48,7 @@ $ g++ -o candump candump.c lib.c
 ## CAN Setting ( for real can )
 ```
 1) 장비 start시에 장치 추가
-/etc/udev/rules.d 에 다음 내용 추가
+/etc/udev/rules.d 아래 rules파일에 다음 내용 추가
 ACTION=="add|change",RUN+="/usr/local/bin/run_pcan_usb.sh”
 
 2) 장치 추가 쉘스크립트
