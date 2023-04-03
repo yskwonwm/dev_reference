@@ -52,7 +52,7 @@ $ g++ -o candump candump.c lib.c
 ACTION=="add|change",RUN+="/usr/local/bin/run_pcan_usb.sh”
 
 2) 장치 추가 쉘스크립트
-$vi usr/local/bin/run_pcan_usb.sh
+$vi /usr/local/bin/run_pcan_usb.sh
 
 #!/bin/sh
 modprobe peak_usb
