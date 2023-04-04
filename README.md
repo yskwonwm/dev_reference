@@ -1,4 +1,5 @@
 # dev-reference
+임시 저장용 - 실제 개발 소스에 추가 후 이 repository는 삭제 예정
 
 # 1. CAN adaptor
 CAN communication transmit/receive connection
