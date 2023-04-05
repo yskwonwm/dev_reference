@@ -35,6 +35,20 @@ canadaptor/
     * lib.h
 * include
     * w1candbc.h     
+### CAN Setting ( for real can )
+```
+1) 장비 start시에 장치 추가
+/etc/udev/rules.d 에 다음 내용 추가
+ACTION=="add|change",RUN+="/usr/local/bin/run_pcan_usb.sh”
+
+2) 장치 추가 쉘스크립트
+$vi /usr/local/bin/run_pcan_usb.sh
+
+#!/bin/sh
+echo "Password" | sudo -S modprobe peak_usb
+echo "Password" | sudo -S ip link set can0 up type can bitrate 500000
+echo "Password" | sudo -S ip link set can1 up type can bitrate 500000
+```
 
 ### Complie
  ```
