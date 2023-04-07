@@ -76,37 +76,6 @@ void DataRelayer::RegistFaultCallback(void(*pfunc)(int,int)){
 };
 
 /**
-* @brief Register a RPM callback function
-* @details Registering class member function callbacks (std:funcion)
-* @param pfunc function point
-* @return void
-* @exception
-*/
-template<typename T>
-void DataRelayer::RegistRpmCallback(T *pClassType,void(T::*pfunc)(int,int,int)){
-  rpmCallback = move(bind(pfunc, pClassType
-    , placeholders::_1
-    , placeholders::_2
-    , placeholders::_3
-    ));
-}
-
-/**
-* @brief Register a FAULT callback function
-* @details Registering class member function callbacks (std:funcion)
-* @param pfunc function point
-* @return void
-* @exception
-*/
-template<typename T>
-void DataRelayer::RegistFaultCallback(T *pClassType,void(T::*pfunc)(int,int)){
-  faultCallback = move(bind(pfunc, pClassType
-    , placeholders::_1
-    , placeholders::_2
-    ));
-}
-
-/**
 * @brief service <-> message id / channel mapping
 * @details Mapping so that can channel and can id can be changed according to environment variables later
 * @param
@@ -315,20 +284,20 @@ void DataRelayer::Run(){
   device.push_back(device_type[CAN0]);
 
   int ret = 0;
-   
+
 
   while(canlib_->Open(device) != 0 ){
     cout << "open fail" << endl;
-    sleep(CAN_ALIVE_CHECKTIME);      
+    sleep(CAN_ALIVE_CHECKTIME);
   }
-    
+
   while(canlib_->RunControlFlag(1,device_type[CAN1]) != 0 ){
     cout << "run config flag fail" << endl;
     sleep(CAN_ALIVE_CHECKTIME);
   }
   //포트 오픈 체크 스레드
   cout << "Start checking for can channel fault" << endl;
-  canlib_->CheckSocketStatus(device,faultCallback);    
+  canlib_->CheckSocketStatus(device,faultCallback);
 }
 
 
@@ -391,6 +360,3 @@ void DataRelayer::SendTest(){
     // cout << endl;
   */
 }
-
-
-

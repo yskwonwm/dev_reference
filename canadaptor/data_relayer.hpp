@@ -40,7 +40,7 @@ class DataRelayer {
     map<int,string> channelMap_; // code , channel
 
   public:
-    DataRelayer(); 
+    DataRelayer();
     virtual ~DataRelayer();
 
     void ControlSteering(float angle);
@@ -48,12 +48,39 @@ class DataRelayer {
     void ControlHardware(bool horn, bool head_light, bool right_light, bool left_light);
     void StopPostMessage(unsigned int id);
 
-    void RegistRpmCallback(void(*pfunc)(int,int,int));
-    void RegistFaultCallback(void(*pfunc)(int,int));
+    /**
+    * @brief Register a RPM callback function
+    * @details Registering class member function callbacks (std:funcion)
+    * @param pfunc function point
+    * @return void
+    * @exception
+    */
+    template<typename T>
+    void RegistRpmCallback(T *pClassType,void(T::*pfunc)(int,int,int)){
+      rpmCallback = move(bind(pfunc, pClassType
+        , placeholders::_1
+        , placeholders::_2
+        , placeholders::_3
+        ));
+    }
+    /**
+    * @brief Register a FAULT callback function
+    * @details Registering class member function callbacks (std:funcion)
+    * @param pfunc function point
+    * @return void
+    * @exception
+    */
+    template<typename T>
+    void RegistFaultCallback(T *pClassType,void(T::*pfunc)(int,int)){
+      faultCallback = move(bind(pfunc, pClassType
+        , placeholders::_1
+        , placeholders::_2
+        ));
+    }
 
-    template<typename T> 
+    template<typename T>
     void RegistRpmCallback(T *pClassType,void(T::*pfunc)(int,int,int));
-    template<typename T> 
+    template<typename T>
     void RegistFaultCallback(T *pClassType,void(T::*pfunc)(int,int));
 
     void Run();
@@ -65,7 +92,7 @@ class DataRelayer {
     void SendMessageControlSteering(float steering_angle_cmd);
     void SendMessageControlAccelerate(float vel);
     void SendMessageControlHardware(bool Horn,bool HeadLight,bool Right_Turn_Light, bool Left_Turn_Light);
-  
+
     void Handler_VCU_EPS_Control_Request (VCU_EPS_Control_Request msg);
     void Handler_Remote_Control_Shake (Remote_Control_Shake msg);
     void Handler_Remote_Control_IO (Remote_Control_IO msg);
