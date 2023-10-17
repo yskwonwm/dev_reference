@@ -21,7 +21,7 @@
 #include <linux/can/raw.h>
 #include <linux/net_tstamp.h>
 
-#include "lib.h"
+#include "lib.hpp"
 
 /* for hardware timestamps - since Linux 2.6.30 */
 #ifndef SO_TIMESTAMPING

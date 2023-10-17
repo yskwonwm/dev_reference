@@ -8,7 +8,7 @@
 #include <arpa/inet.h>
 
 #include "include/w1candbc.h"
-
+#include "include/df_ugv.hpp"
 
 using namespace std;
 
@@ -29,7 +29,7 @@ class DataRelayer {
     typedef std::function<void(int,int,int)> func_rpm_callback; // Callback function pointer variable definition
     //typedef std::function<void(int,int,int)> func_other_callback; // Callback function pointer variable definition
 
-    func_fault_callback faultCallback;
+    func_fault_callback faultCallback;// Callback function pointer variable definition
     func_rpm_callback rpmCallback; // Callback function pointer variable definition
     //func_other_callback otherCallback; // Callback function pointer variable definition
 
@@ -40,13 +40,20 @@ class DataRelayer {
     map<int,string> channelMap_; // code , channel
 
   public:
-    DataRelayer();
+    DataRelayer(); 
     virtual ~DataRelayer();
 
     void ControlSteering(float angle);
     void ControlVel(float vel);
     void ControlHardware(bool horn, bool head_light, bool right_light, bool left_light);
     void StopPostMessage(unsigned int id);
+
+    void HeartBeat();
+    //void static_break(bool flag);
+    void static_break(UGV::BREAK break_status);
+    void RegistRpmCallback(void(*pfunc)(int,int,int));
+    void RegistFaultCallback(void(*pfunc)(int,int));
+
 
     /**
     * @brief Register a RPM callback function
@@ -63,6 +70,7 @@ class DataRelayer {
         , placeholders::_3
         ));
     }
+
     /**
     * @brief Register a FAULT callback function
     * @details Registering class member function callbacks (std:funcion)
@@ -78,11 +86,6 @@ class DataRelayer {
         ));
     }
 
-    template<typename T>
-    void RegistRpmCallback(T *pClassType,void(T::*pfunc)(int,int,int));
-    template<typename T>
-    void RegistFaultCallback(T *pClassType,void(T::*pfunc)(int,int));
-
     void Run();
     void SendTest();
 
@@ -92,11 +95,11 @@ class DataRelayer {
     void SendMessageControlSteering(float steering_angle_cmd);
     void SendMessageControlAccelerate(float vel);
     void SendMessageControlHardware(bool Horn,bool HeadLight,bool Right_Turn_Light, bool Left_Turn_Light);
-
+  
     void Handler_VCU_EPS_Control_Request (VCU_EPS_Control_Request msg);
     void Handler_Remote_Control_Shake (Remote_Control_Shake msg);
     void Handler_Remote_Control_IO (Remote_Control_IO msg);
-    void Handler_DBS_Status (DBS_Status msg);
+    void Handler_DBS_Status (DBS_Status2 msg);
     void Handler_VCU_DBS_Request (VCU_DBS_Request msg);
     void Handler_MCU_Torque_Feedback (MCU_Torque_Feedback msg);
     unsigned short ConvertSpeedUnits(float vel);

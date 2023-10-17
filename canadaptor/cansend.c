@@ -54,7 +54,7 @@
 #include <linux/can.h>
 #include <linux/can/raw.h>
 
-#include "lib.h"
+#include "lib.hpp"
 
 void print_usage(char *prg)
 {

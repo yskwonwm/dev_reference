@@ -1,10 +1,8 @@
 
+#include "data_relayer.hpp"
 #include <iostream>
 #include <unistd.h>
 #include <signal.h>
-
-#include "data_relayer.hpp"
-
 //extern int optind, opterr, optopt;
 //static char *progname;
 static volatile int state = 1;

@@ -54,9 +54,10 @@ class CanAdaptor {
     typedef std::function<void(VCU_EPS_Control_Request)> func_VCU_EPS_Control_Request;
     typedef std::function<void(Remote_Control_Shake)> func_Remote_Control_Shake;
     typedef std::function<void(Remote_Control_IO)> func_Remote_Control_IO;
-    typedef std::function<void(DBS_Status)> func_DBS_Status;
+    typedef std::function<void(DBS_Status2)> func_DBS_Status;
     typedef std::function<void(VCU_DBS_Request)> func_VCU_DBS_Request;
     typedef std::function<void(MCU_Torque_Feedback)> func_MCU_Torque_Feedback;
+    
 
     func_VCU_EPS_Control_Request handler_vcr;
     func_Remote_Control_Shake handler_rcs;
@@ -82,14 +83,14 @@ class CanAdaptor {
        
     void PrintMapState(string name);
 
-    byte* MakeFramebody(byte* body,iECU_Control_Hardware data); //< strunct를 byte형 body로 변환
+    byte* MakeFramebody(byte* body,AD_Control_Body  data); //< strunct를 byte형 body로 변환
     // can network 데이터 전송 함수  - 전송 데이터 타입 별로 생성......
 
-    void PostMessageByType(iECU_Control_Hardware body,int msgid,string device);
-    void PostMessageByType(iECU_Control_Accelerate body,int msgid,string device);
-    void PostMessageByType(iECU_Control_Brake body,int msgid,string device);
-    void PostMessageByType(iECU_Control_Steering body,int msgid,string device);
-    void PostMessageByType(Mode_Control_Flag body,int msgid,string device);
+    void PostMessageByType(AD_Control_Body  body,int msgid,string device);
+    void PostMessageByType(AD_Control_Accelerate body,int msgid,string device);
+    void PostMessageByType(AD_Control_Brake body,int msgid,string device);
+    void PostMessageByType(AD_Control_Steering body,int msgid,string device);
+    void PostMessageByType(AD_Control_Flag body,int msgid,string device);
     void PostMessageByType(byte* body, unsigned int canid, string device );
     void PostMessageByType(byte* data, unsigned int canid, string device,int duration );
     
@@ -233,7 +234,7 @@ class CanAdaptor {
     * @exception
     */
     template<typename T>
-    void SetHandler(T *pClassType,void(T::*pfunc)(DBS_Status),int canid,string device){        
+    void SetHandler(T *pClassType,void(T::*pfunc)(DBS_Status2),int canid,string device){        
       handler_ds = move(bind(pfunc, pClassType, placeholders::_1));
       //int canid = string2hex(msgid);
       
@@ -242,11 +243,11 @@ class CanAdaptor {
                 ,device
                 ,[&](byte* data) { 
                   // data를 DBS_Status 맞춰서 넣는다.
-                  DBS_Status r;
+                  DBS_Status2 r;
                   memcpy((void*)&r,data,CAN_MAX_DLEN);
                   //this->handler_h(r);
                   //cout<< "call DBS_Status" << endl;
-                  handler_ds((DBS_Status)r);
+                  handler_ds((DBS_Status2)r);
                  // cout<< "end DBS_Status" << endl;
                 }
                 );

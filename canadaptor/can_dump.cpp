@@ -21,7 +21,7 @@
 #include <linux/can/raw.h>
 #include <linux/net_tstamp.h>
 
-#include "lib.h"
+#include "lib.hpp"
 #include "can_dump.hpp"
 #include "can_adaptor.hpp"
 #include "include/can_define.hpp"
@@ -328,6 +328,7 @@ int CanDump::Open(int argc, std::vector<std::string> argval,CanAdaptor* pClassTy
 			//printf("%*s", max_devname_len, devname[idx]);
 		    //callback function
             //pClassType->receive(frame.data,frame.can_id);
+			
 			fprint_long_canframe(stdout, &frame, NULL, view, maxdlen);
 			printf("\n");
 
