@@ -53,13 +53,13 @@ echo "Password" | sudo -S ip link set can1 up type can bitrate 500000
 ### Complie
  ```
 # can adaptor 
-$ g++ -o canadaptor main.cpp can_adaptor.cpp can_send.cpp can_dump.cpp lib.c data_relayer.cpp -lpthread
+$ g++ -o canadaptor main.cpp can_send.cpp data_relayer.cpp can_adaptor.cpp can_dump.cpp lib.cpp -lpthread 
 
 # can send
-$ g++ -o cansend cansend.c lib.c
+$ g++ -o cansend cansend.c lib.cpp
 
 # can dump
-$ g++ -o candump candump.c lib.c
+$ g++ -o candump candump.c lib.cpp
 
 ```         
 
