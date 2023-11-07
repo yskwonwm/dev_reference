@@ -1,5 +1,8 @@
 package org.example;
 
+import java.util.ArrayList;
+import java.util.Optional;
+
 import static java.lang.Math.*;
 
 public class PositionConvertor{
@@ -12,11 +15,13 @@ public class PositionConvertor{
         double y;
     };
 
-    static public double mappingMaWidth;
-    static public double mappingMaHeight;
+    static public double mappingMapWidth;
+    static public double mappingMapHeight;
     static public double slamRotationAngle;
     static public Point areaOffset;
 
+    static public Point lonlatLB;
+    static public Point lonlatRT;
     public enum WorkType {
         SLAM,GPS
     }
@@ -39,7 +44,9 @@ public class PositionConvertor{
     static public void initArea(int slamWidth
             ,int slamHeight
             ,Point IntersectionStartPoint
-            ,Point IntersectionEndPoint){
+            ,Point IntersectionEndPoint
+            ,Point longitudeLatitudeLB
+            ,Point longitudeLatitudeRT){
         //1) lon2,lat2와  lon1,lat2로 slam map 회전 각도
         slamRotationAngle = getAngle(IntersectionStartPoint.x,IntersectionStartPoint.y,IntersectionEndPoint.x,IntersectionEndPoint.y);
 
@@ -52,11 +59,15 @@ public class PositionConvertor{
         //slamWidth,slamHeight
 
          //3) GPS 매핑 맵 크기
-        mappingMaWidth = round(sin(slamRotationAngle)*slamHeight + cos(slamRotationAngle)*slamWidth) ;
-        mappingMaHeight = round(cos(slamRotationAngle)*slamHeight + sin(slamRotationAngle)*slamWidth) ;
+        mappingMapWidth = round(sin(slamRotationAngle)*slamHeight + cos(slamRotationAngle)*slamWidth) ;
+        mappingMapHeight = round(cos(slamRotationAngle)*slamHeight + sin(slamRotationAngle)*slamWidth) ;
 
         //4) x offset
         areaOffset = new Point(round(sin(slamRotationAngle)*slamHeight),0.0);
+
+        //5)현장맵을 포함하는 지도의 사각영역(경위도 직교)
+        lonlatLB = longitudeLatitudeLB;
+        lonlatRT = longitudeLatitudeRT;
     }
 
     /**
@@ -73,10 +84,10 @@ public class PositionConvertor{
      * @return : converted slam coordinates
      *
      */
-    static public  Point ConvertGPS2Slam(double longitude, double latitude,Point lonlatLB,Point lonlatRT) {
+    static public  Point ConvertGPS2Slam(double longitude, double latitude) {
         //1. GPS to Mapping Map
-        double mX = ((longitude-lonlatLB.x)/(lonlatRT.x-lonlatLB.x)) * mappingMaWidth;
-        double mY = ((latitude-lonlatLB.y)/(lonlatRT.y-lonlatLB.y))* mappingMaHeight;
+        double mX = ((longitude-lonlatLB.x)/(lonlatRT.x-lonlatLB.x)) * mappingMapWidth;
+        double mY = ((latitude-lonlatLB.y)/(lonlatRT.y-lonlatLB.y))* mappingMapHeight;
 
        // 2. Mapping Map to Slam Position
         return ConvertSlamPos((int)mX, (int)mY, WorkType.GPS);
@@ -96,13 +107,15 @@ public class PositionConvertor{
      * @return : converted slam coordinates
      *
      */
-    static public  Point ConvertSlam2GPS(int x, int y,Point lonlatLB,Point lonlatRT) {
+    static public  Point ConvertSlam2GPS(int x, int y) {
         // 1. Slam Position to Mapping Map
         Point mPos = ConvertSlamPos(x, y, WorkType.SLAM);
-
+        if(Optional.ofNullable(mPos).isEmpty()){
+            return new Point(0,0);
+        }
         //2. Mapping Map to GPS
-        double Longitude = lonlatLB.x+(lonlatRT.x-lonlatLB.x) * (mPos.x/mappingMaWidth);
-        double latitude = lonlatLB.y+(lonlatRT.y-lonlatLB.y) * (mPos.y/mappingMaHeight);
+        double Longitude = lonlatLB.x+(lonlatRT.x-lonlatLB.x) * (mPos.x/mappingMapWidth);
+        double latitude = lonlatLB.y+(lonlatRT.y-lonlatLB.y) * (mPos.y/mappingMapHeight);
 
         return new Point(Longitude,latitude);
     }
@@ -178,6 +191,104 @@ public class PositionConvertor{
         double theta = atan2(y, x);
       //  double bearing = (theta * 180 / Math.PI + 360) % 360;
         return PI/2-theta;// 정북 기준 이므로 변환
+    }
+
+    /**
+     *  <p>
+     * Extract virtual map area coordinates mapped to slam map for mock testing
+     *  </p>
+     *
+     * @version : 0.0.1
+     * @author : wavem
+     * @param : x slam reference coordinate x
+     * @param : y slam reference coordinate y
+     * @param : width slam map width
+     * @param : height slam map height
+     * @param : distPerPix slam map distance per pixel
+     * @param : mapPoint virtual map reference coordinate lonlat
+     * @param : lonlatLT  Top left coordinate of the virtual map area
+     * @param : lonlatRT  Top right coordinates of the virtual map area
+     * @return : virtual map area bottom left,top right
+     *
+     */
+    static public ArrayList<Point> ConvertSlam2VirtualMapArea(int x, int y, int width, int height, double distPerPix, Point mapPoint, Point lonlatLT, Point lonlatRT) {
+
+        //1. 맵의 기울어진 각도 추출
+        double slamRotationAngle = getAngle(lonlatLT.x,lonlatLT.y,lonlatRT.x,lonlatRT.y);
+        //2. 슬램맵 원점과 우상단의 거리와  각도
+        double yDistSlam = (height-y)*distPerPix;  // 슬램맵 원점 기준 y 축 거리
+        double xDistSlam = (width-x)*distPerPix;   // 슬램맵 원점 기준  x 축 거리
+        double rtPointAngle = atan2(height-y,width-x); // 슬램맵 우상단과 기준좌표와의 각도
+        double distSlam = sqrt(pow((height-y),2)+pow((width-x),2))*distPerPix; // 슬램맵 우상단과 기준좌표와의 거리
+
+        double diagonalAngle = atan2(height,width); // 슬램맵 우상단과 좌하단의 각도
+        double diagonalDistance = sqrt(pow((height),2)+pow((width),2))*distPerPix; // 슬램맵 우상단과 조하단 거리
+        double heightDistance = height*distPerPix;
+        double widthDistance = width*distPerPix;
+
+        //3. 슬램맵 거리와 각도에 해당하는 현장맵 우상단 좌표 추출(현장맵 원점 기준,맵 각도 반역)(상단 교점)
+        Point rightTopPos= getMovingLonLat(mapPoint.x,mapPoint.y,distSlam,slamRotationAngle+rtPointAngle);
+
+        //4. 슬램맵 width로 현장맵 좌상단 구하기(좌측 교점)
+        Point leftTopPos= getMovingLonLat(rightTopPos.x,rightTopPos.y,widthDistance,slamRotationAngle+PI);
+
+        //5. 슬램맵 대각선 길이 rtDistSlam 현장맵 좌하단 구하기(하단 교점)
+        Point leftBottomPos= getMovingLonLat(rightTopPos.x,rightTopPos.y,diagonalDistance,slamRotationAngle+diagonalAngle+PI);
+
+        //6. 슬램맵 height 로 현장맵 우하단 구하기(우측 교점)
+        Point rightBottomPos= getMovingLonLat(rightTopPos.x,rightTopPos.y,heightDistance,slamRotationAngle+(PI+PI/2));
+
+        ArrayList<Point> pointList = new ArrayList<>();
+        pointList.add(new Point(leftTopPos.x,leftBottomPos.y));// 좌상 lat, 좌하 lon
+        pointList.add(new Point(rightBottomPos.x,rightTopPos.y)); // 우하 lat, 우상 lon
+
+        return pointList;
+    }
+
+    /**
+     *  <p>
+     * Calculate the coordinates corresponding to the distance and angle from the current longitude and latitude coordinates.
+     *  </p>
+     *
+     * @version : 0.0.1
+     * @author : wavem
+     * @param : lat latitude
+     * @param : long longitude
+     * @param : distance length between two coordinates
+     * @param : radian angle between coordinates
+     * @return : Longitude and latitude coordinates moved
+     *
+     */
+    static private Point getMovingLonLat(double lon, double lat, double distance, double radian) {
+        //  위도 35의 경도 1도의 길이(m)
+        double distPerLatDegree = 110941;
+        double distPerLonDegree = 91290;
+        //4분면 값
+        double quadrant1 = 90 * PI / 180;
+        double quadrant2 = 180 * PI / 180;
+        double quadrant3 = 270 * PI / 180;
+
+        double LongitudeMove = (sqrt(pow(distance,2)-pow(sin(radian)*distance,2)))/distPerLonDegree;
+        double latitudeMove = (sqrt(pow(distance,2)-pow(cos(radian)*distance,2)))/distPerLatDegree;
+
+        double latitude = 0;
+        double Longitude = 0;
+
+        if ( quadrant1 >= radian){
+            Longitude = lon + LongitudeMove;
+            latitude = lat + latitudeMove;
+        }else if( quadrant2 >= radian){
+            Longitude = lon - LongitudeMove;
+            latitude = lat + latitudeMove;
+        }else if( quadrant3 >= radian){
+            Longitude = lon - LongitudeMove;
+            latitude = lat - latitudeMove;
+        }else {
+            Longitude = lon + LongitudeMove;
+            latitude = lat - latitudeMove;
+        }
+
+        return new Point(Longitude,latitude);
     }
 }
 
