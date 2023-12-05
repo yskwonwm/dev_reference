@@ -1,0 +1,16 @@
+/gps_slam_converter:
+  ros__parameters:
+    slam_map_width: 1238
+    slam_map_height: 765
+    intersection_start_point_lon: 128.858009083
+    intersection_start_point_lat: 35.157430158
+    intersection_end_point_lon: 128.858870603
+    intersection_end_point_lat: 35.158056682
+    std_point_slamX1: 415
+    std_point_slamY1: 235
+    std_point_slamX2: 1210
+    std_point_slamY2: 541
+    std_point_lon1: 128.8579836
+    std_point_lat1: 35.1576298
+    std_point_lon2: 128.858333
+    std_point_lat2: 35.15818

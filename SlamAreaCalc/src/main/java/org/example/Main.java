@@ -1,91 +1,121 @@
 package org.example;
 
-import java.util.ArrayList;
+import java.awt.*;
+import java.io.*;
+import java.util.Scanner;
+import java.util.Map;
+import org.yaml.snakeyaml.Yaml;
+
 
 public class Main {
     public static void main(String[] args) {
-        //현장 맵 중심 : 128.8582196,35.15794665
-
-        //slam area : 2096,1205
-        //slam 중심 : 1048,602
-
-        //좌측 교점:128.8575686,35.15783502
-        //상단 교점:128.858427988,35.158463143
-        //우측 교점:128.858870603,35.158056682
-        //하단 교점:128.858009083,35.157430158
-
-        // 전제 영역
-        // LB : 128.8575686,35.157430158
-        // RT : 128.858870603,35.158463143
-
-        // LB : 128.8575686001505289,35.1574301543503580
 
 
-        // 1. 슬램맵을 현장맵과 매핑 테스트
-        // 슬램맵 1048 X 602 의 기준점 520,300  ( 원래 현장슬램맵의 사이즈는 2096 X 1205 )
-        // 현장 맵 의 기준점 128.858427988,35.158463143
-        // 현장 맵의 좌하단~우하단(기울기을 얻기 위함) 128.858009083,35.1574301588 ~ 128.858870603,35.158056682
-        // return : 매핑 가상 현장 맵의 우상단~좌상단 , 좌표 매핑시 가상 현장맵의 기준 좌표로 활용 한다.
-        ArrayList<PositionConvertor.Point> arr =  PositionConvertor.ConvertSlam2VirtualMapArea(520, 300, 1048, 602, 0.05
-                ,new PositionConvertor.Point(128.858427988,35.158463143)
-                ,new PositionConvertor.Point(128.858009083,35.157430158)
-                ,new PositionConvertor.Point(128.858870603,35.158056682));
+        Point testPos1 = new Point(0,0);
+        Point testPos2 = new Point(1238,765);
+        Point testPos3 = new Point(415,235);
+        Point testPos4 = new Point(574,235);
+        Point testPos5 = new Point(1210,235);
+        Point testPos6 = new Point(1210,541);
 
-        PositionConvertor.initArea(2080,1200
-                ,new PositionConvertor.Point(128.858009083,35.157430158)
-                ,new PositionConvertor.Point(128.858870603,35.158056682)
-                ,new PositionConvertor.Point(arr.get(0).x,arr.get(0).y)
-                ,new PositionConvertor.Point(arr.get(1).x,arr.get(1).y));
+        Integer slam_map_width = 1238;
+        Integer slam_map_height = 765;
+        Double intersection_start_point_lon = 128.858009083;
+        Double intersection_start_point_lat = 35.157430158;
+        Double intersection_end_point_lon = 128.858870603;
+        Double intersection_end_point_lat = 35.158056682;
+        Integer std_point_slamX1 = 415;
+        Integer std_point_slamY1 =  235;
+        Integer std_point_slamX2 = 1210;
+        Integer std_point_slamY2 = 541;
+        Double std_point_lon1 = 128.8579836;
+        Double std_point_lat1 = 35.1576298;
+        Double std_point_lon2 = 128.858333;
+        Double std_point_lat2 =  35.15818;
 
-        // 2. GPS 슬램맵 간 좌표 변환
-        // 초기화
-        // 슬램맵 크기 2080 X 1200
-        // 현장 맵의 좌하단~우하단(기울기을 얻기 위함) 128.858009083,35.1574301588 ~ 128.858870603,35.158056682
-        // 현장맵을 포함하는 지도의 사각영역(LB~RT) 128.8575686,35.157430158 ~ 128.858870603,35.158463143
-        PositionConvertor.initArea(2080,1200
-                ,new PositionConvertor.Point(128.858009083,35.157430158)
-                ,new PositionConvertor.Point(128.858870603,35.158056682)
-                ,new PositionConvertor.Point(128.8575686,35.157430158)
-                ,new PositionConvertor.Point(128.858870603,35.158463143));
-    /*  PositionConvertor.Point pos1 = PositionConvertor.ConvertSlamPos(0,0, PositionConvertor.WorkType.SLAM);
-        PositionConvertor.Point pos2 = PositionConvertor.ConvertSlamPos(399,0, PositionConvertor.WorkType.GPS);
+        Yaml yaml = new Yaml();
+        try (InputStream inputStream = new FileInputStream("map_coordinates.yaml")) {
+            Map<String, Object> obj  = yaml.load(inputStream);
 
-        PositionConvertor.Point pos3 = PositionConvertor.ConvertSlamPos(1040,0, PositionConvertor.WorkType.SLAM);
-        PositionConvertor.Point pos4 = PositionConvertor.ConvertSlamPos(1176,691, PositionConvertor.WorkType.GPS);
+            Map<String, Object> obj2 = (Map<String, Object>)obj.get("/gps_slam_converter");
+            Map<String, Object> obj3 = ( Map<String, Object> )obj2.get("ros__parameters");
 
-        PositionConvertor.Point pos5 = PositionConvertor.ConvertSlamPos(1040,600, PositionConvertor.WorkType.SLAM);
-        PositionConvertor.Point pos6 = PositionConvertor.ConvertSlamPos(777,1140, PositionConvertor.WorkType.GPS);
+            slam_map_width = (Integer) obj3.get("slam_map_width");
+            slam_map_height = (Integer) obj3.get("slam_map_height");
+            intersection_start_point_lon = (Double) obj3.get("intersection_start_point_lon");
+            intersection_start_point_lat = (Double) obj3.get("intersection_start_point_lat");
+            intersection_end_point_lon = (Double) obj3.get("intersection_end_point_lon");
+            intersection_end_point_lat = (Double) obj3.get("intersection_end_point_lat");
+            std_point_slamX1 = (Integer) obj3.get("std_point_slamX1");
+            std_point_slamY1 =  (Integer) obj3.get("std_point_slamY1");
+            std_point_slamX2 = (Integer) obj3.get("std_point_slamX2");
+            std_point_slamY2 = (Integer) obj3.get("std_point_slamY2");
+            std_point_lon1 = (Double) obj3.get("std_point_lon1");
+            std_point_lat1 = (Double) obj3.get("std_point_lat1");
+            std_point_lon2 = (Double) obj3.get("std_point_lon2");
+            std_point_lat2 =  (Double) obj3.get("std_point_lat2");
 
-        PositionConvertor.Point pos7 = PositionConvertor.ConvertSlamPos(0,600, PositionConvertor.WorkType.SLAM);
-        PositionConvertor.Point pos8 = PositionConvertor.ConvertSlamPos(0,448, PositionConvertor.WorkType.GPS);*/
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        // GPS좌표를 SLAM 좌표로 변환
-        PositionConvertor.Point slampos1 = PositionConvertor.ConvertGPS2Slam(128.8575686,35.15783502);// 좌상
+/*        Scanner sc = new Scanner(System.in);
+        System.out.println("input parameter -s sllamx SlamY -g longitude latitude");
+        String cmd = sc.next();*/
 
-        PositionConvertor.Point slampos2 = PositionConvertor.ConvertGPS2Slam(128.858427988,35.158463143); //우상
+        int shift = 0;
+        PositionConvertor.initialize(
+                (int)(std_point_slamX1-shift), std_point_slamY1
+                ,(int)(std_point_slamX2-shift), std_point_slamY2
+                ,(int)(slam_map_width-shift), slam_map_height
+                ,new PositionConvertor.Point(std_point_lon1,std_point_lat1)
+                ,new PositionConvertor.Point(std_point_lon2,std_point_lat2)
+                ,new PositionConvertor.Point(intersection_start_point_lon,intersection_start_point_lat)
+                ,new PositionConvertor.Point(intersection_end_point_lon,intersection_end_point_lat));
 
-        PositionConvertor.Point slampos3 = PositionConvertor.ConvertGPS2Slam(128.858870603,35.158056682); // 우하
+        System.out.println("[1]" );
+        PositionConvertor.Point gpsposTest = PositionConvertor.ConvertSlam2GPS(testPos1.x,testPos1.y);
+        PositionConvertor.Point slamposTest = PositionConvertor.ConvertGPS2Slam(gpsposTest.x,gpsposTest.y);
+        //PositionConvertor.Point gpsposTest2 = PositionConvertor.ConvertSlam2GPS((int)slamposTest.x, (int)slamposTest.y);
+        System.out.println("GPS :  " + gpsposTest.y+", "+gpsposTest.x);
+        System.out.println("SLAM:  " + Math.round(slamposTest.y*100)/100.0 +", "+Math.round(slamposTest.x*100)/100.0);
 
-        PositionConvertor.Point slampos4 = PositionConvertor.ConvertGPS2Slam(128.858009083,35.157430158); //좌하
+        System.out.println("[2]" );
+        gpsposTest = PositionConvertor.ConvertSlam2GPS((int)(testPos2.x-shift),testPos2.y);
+        slamposTest = PositionConvertor.ConvertGPS2Slam(gpsposTest.x,gpsposTest.y);
+        //gpsposTest2 = PositionConvertor.ConvertSlam2GPS((int)slamposTest.x, (int)slamposTest.y);
+        System.out.println("GPS :  " + gpsposTest.y+", "+gpsposTest.x);
+        System.out.println("SLAM:  " + Math.round(slamposTest.y*100)/100.0 +", "+Math.round(slamposTest.x*100)/100.0);
 
-        PositionConvertor.Point slampos5 = PositionConvertor.ConvertGPS2Slam(128.85821960150002,35.1579457443728); //중심
+        System.out.println("[3]" );
+        gpsposTest = PositionConvertor.ConvertSlam2GPS((int)(testPos3.x-shift),testPos3.y);
+        slamposTest = PositionConvertor.ConvertGPS2Slam(gpsposTest.x,gpsposTest.y);
+        //gpsposTest2 = PositionConvertor.ConvertSlam2GPS((int)slamposTest.x, (int)slamposTest.y);
+        System.out.println("GPS :  " + gpsposTest.y+", "+gpsposTest.x);
+        System.out.println("SLAM:  " + Math.round(slamposTest.y*100)/100.0 +", "+Math.round(slamposTest.x*100)/100.0);
 
+        System.out.println("[4]" );
+        gpsposTest = PositionConvertor.ConvertSlam2GPS((int)(testPos4.x-shift),testPos4.y);
+        slamposTest = PositionConvertor.ConvertGPS2Slam(gpsposTest.x,gpsposTest.y);
+        //gpsposTest2 = PositionConvertor.ConvertSlam2GPS((int)slamposTest.x, (int)slamposTest.y);
+        System.out.println("GPS :  " + gpsposTest.y+", "+gpsposTest.x);
+        System.out.println("SLAM:  " + Math.round(slamposTest.y*100)/100.0 +", "+Math.round(slamposTest.x*100)/100.0);
 
-        // SLAM 좌표를 GPS좌표로 변환
-        PositionConvertor.Point gpspos1 = PositionConvertor.ConvertSlam2GPS(0,0);
-        System.out.println(gpspos1.y+","+gpspos1.x);
+        System.out.println("[5]" );
+        gpsposTest = PositionConvertor.ConvertSlam2GPS((int)(testPos5.x-shift),testPos5.y);
+        slamposTest = PositionConvertor.ConvertGPS2Slam(gpsposTest.x,gpsposTest.y);
+        //gpsposTest2 = PositionConvertor.ConvertSlam2GPS((int)slamposTest.x, (int)slamposTest.y);
+        System.out.println("GPS :  " + gpsposTest.y+", "+gpsposTest.x);
+        System.out.println("SLAM:  " + Math.round(slamposTest.y*100)/100.0 +", "+Math.round(slamposTest.x*100)/100.0);
 
-        PositionConvertor.Point gpspos2 = PositionConvertor.ConvertSlam2GPS(2080,0);
-        System.out.println(gpspos2.y+","+gpspos2.x);
-
-        PositionConvertor.Point gpspos3 = PositionConvertor.ConvertSlam2GPS(2080,1200);
-        System.out.println(gpspos3.y+","+gpspos3.x);
-
-        PositionConvertor.Point gpspos4 = PositionConvertor.ConvertSlam2GPS(0,1200);
-        System.out.println(gpspos4.y+","+gpspos4.x);
-
-        PositionConvertor.Point gpspos5 = PositionConvertor.ConvertSlam2GPS(1040,600);
-        System.out.println(gpspos5.y+","+gpspos5.x);
+        System.out.println("[6]" );
+        gpsposTest = PositionConvertor.ConvertSlam2GPS((int)(testPos6.x-shift),testPos6.y);
+        slamposTest = PositionConvertor.ConvertGPS2Slam(gpsposTest.x,gpsposTest.y);
+        //gpsposTest2 = PositionConvertor.ConvertSlam2GPS((int)slamposTest.x, (int)slamposTest.y);
+        System.out.println("GPS :  " + gpsposTest.y+", "+gpsposTest.x);
+        System.out.println("SLAM:  " + Math.round(slamposTest.y*100)/100.0 +", "+Math.round(slamposTest.x*100)/100.0);
 
         System.out.println("Coordinate system conversion complete!");
     }
