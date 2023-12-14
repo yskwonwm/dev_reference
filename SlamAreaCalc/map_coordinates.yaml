@@ -14,3 +14,13 @@
     std_point_lat1: 35.1576298
     std_point_lon2: 128.858333
     std_point_lat2: 35.15818
+    range_from_x: 0.0
+    range_to_x: 0.0
+    range_from_y: 0.0
+    range_to_y: 0.0
+    degree4th: 0.0
+    degree3rd: 0.001016235
+    degree2nd: -0.085948519
+    degree1st: 2.589154097
+    y_intercept: 1.285885402
+    std_height: 6.13

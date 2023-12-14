@@ -33,6 +33,17 @@ public class Main {
         Double std_point_lon2 = 128.858333;
         Double std_point_lat2 =  35.15818;
 
+        double range_from_x =  0;
+        double range_to_x =  0;
+        double range_from_y =  0;
+        double range_to_y =  0;
+        double degree4th =  0;
+        double degree3rd =  0;
+        double degree2nd =  0;
+        double degree1st =  0;
+        double y_intercept =  0;
+        double std_height =  0;
+
         Yaml yaml = new Yaml();
         try (InputStream inputStream = new FileInputStream("map_coordinates.yaml")) {
             Map<String, Object> obj  = yaml.load(inputStream);
@@ -55,15 +66,38 @@ public class Main {
             std_point_lon2 = (Double) obj3.get("std_point_lon2");
             std_point_lat2 =  (Double) obj3.get("std_point_lat2");
 
+            range_from_x =  (Double) obj3.get("range_from_x");
+            range_to_x =  (Double) obj3.get("range_to_x");
+            range_from_y =  (Double) obj3.get("range_from_y");
+            range_to_y =  (Double) obj3.get("range_to_y");
+            degree4th =  (Double) obj3.get("degree4th");
+            degree3rd =  (Double) obj3.get("degree3rd");
+            degree2nd =  (Double) obj3.get("degree2nd");
+            degree1st =  (Double) obj3.get("degree1st");
+            y_intercept =  (Double) obj3.get("y_intercept");
+            std_height =  (Double) obj3.get("std_height");
+
+
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+        double x = 10.0;
+        double y = 6.13;
+        double displacement = 0;
+        // gps2slam 은 변환 값에서 displacement 더해줌, slam2gps는 변환 값에서 displacement 빼준다.
+        if ( PositionConvertor.isCorrectionRage(x,y,range_from_x,range_to_x,range_from_y,range_to_y) ) {
+            displacement = PositionConvertor.getCorrectYPosition(x, std_height, y_intercept, degree4th, degree3rd, degree2nd, degree1st);
+        }
+
+        System.out.println("correctYPosition : " + displacement);
+
 /*        Scanner sc = new Scanner(System.in);
         System.out.println("input parameter -s sllamx SlamY -g longitude latitude");
         String cmd = sc.next();*/
+
 
         int shift = 0;
         PositionConvertor.initialize(

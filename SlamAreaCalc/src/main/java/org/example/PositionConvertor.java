@@ -462,6 +462,25 @@ public class PositionConvertor{
 
         return distance * 1000.0;
     }
+    static boolean isCorrectionRage(double x,double y, double fromX,double toX,double fromY,double toY){
+        if( fromX > x || x > toX || fromY > y || y > toY){
+            return false;
+        }
+        return true;
+    }
+    public static double getCorrectYPosition(
+            double x
+            , double stdHeight
+            , double yIntercept
+            , double degree4th
+            , double degree3rd
+            , double degree2nd
+            , double degree1st) {
+
+        double yPos = degree4th*pow(x,4) + degree3rd*pow(x,3) + degree2nd*pow(x,2) + degree1st*pow(x,1) +yIntercept;
+
+        return yPos - stdHeight;
+    }
 }
 
 
